@@ -14,7 +14,7 @@
 <header class="site-header">
   <div class="header-inner">
     <a href="/" class="brand">
-      <span class="brand-icon">🐝</span>
+      <span class="brand-bee">🐝</span>
       <div>
         <span class="brand-name">Research Navigator</span>
         <span class="brand-sub">Khalifa University Library</span>
@@ -38,19 +38,75 @@
   </div>
 </header>
 
-<!-- ── Hero ────────────────────────────────────────────────────────────── -->
-<section class="hero">
-  <div class="hero-inner">
-    <div class="hero-eyebrow">📖 Publishing &amp; Repository Assistant</div>
-    <h1>Find the right journal. <span>Check your rights. Deposit to the right repository.</span></h1>
-    <p class="hero-tagline">For KU researchers, librarians, and repository teams. Journal recommendations, version-specific Green OA policy checks, and research data repository matchmaking — with explicit verification labels.</p>
-    <div class="hero-ku">
-      🏛️ Powered by <a href="https://library.ku.ac.ae/lib" target="_blank">Khalifa University Library</a>
-      &nbsp;·&nbsp; Deposit at <a href="https://khazna.ku.ac.ae" target="_blank">Khazna</a>
-      &nbsp;·&nbsp; <a href="mailto:khazna@ku.ac.ae">khazna@ku.ac.ae</a>
+<!-- ── Welcome hero (LibBee style) ──────────────────────────────────────── -->
+<div class="lb-welcome">
+  <div class="lb-mascot">
+    <div class="lb-bee">🐝</div>
+    <h1 class="lb-title">Research Navigator</h1>
+    <p class="lb-sub">Hi! I'm your KU publishing assistant. Find the right journal, check your self-archiving rights, and deposit to the right repository.</p>
+  </div>
+  <div class="lb-card">
+    <div class="lb-card-head">
+      <div class="lb-card-eyebrow">Publishing &amp; Repository Assistant</div>
+      <div class="lb-card-title">Find the right journal. <em>Check your rights. Deposit to the right repository.</em></div>
+      <div class="lb-stats">
+        <div class="lb-stat"><span class="lb-stat-n">53K+</span><span class="lb-stat-l">Journals indexed</span></div>
+        <div class="lb-stat-sep"></div>
+        <div class="lb-stat"><span class="lb-stat-n">15</span><span class="lb-stat-l">Results per query</span></div>
+        <div class="lb-stat-sep"></div>
+        <div class="lb-stat"><span class="lb-stat-n">3</span><span class="lb-stat-l">OA versions checked</span></div>
+        <div class="lb-stat-sep"></div>
+        <div class="lb-stat"><span class="lb-stat-n">Free</span><span class="lb-stat-l">For KU researchers</span></div>
+      </div>
+    </div>
+    <div class="lb-features">
+      <div class="lb-feat" onclick="activateTab('journals')">
+        <div class="lb-feat-ic" style="background:#e0e7ff">📰</div>
+        <div class="lb-feat-txt">
+          <span class="lb-feat-title">Journal Submission</span>
+          <span class="lb-feat-desc">5 detailed recommendations + 10 quick matches · SCImago quartiles · Scopus links · full Green OA breakdown</span>
+        </div>
+        <span class="lb-feat-arr">›</span>
+      </div>
+      <div class="lb-feat" onclick="activateTab('license')">
+        <div class="lb-feat-ic" style="background:#d1fae5">🛡</div>
+        <div class="lb-feat-txt">
+          <span class="lb-feat-title">License &amp; Self-Archiving Check</span>
+          <span class="lb-feat-desc">Preprint · Accepted Manuscript · Version of Record · embargo lengths · licence conditions · risk flags</span>
+        </div>
+        <span class="lb-feat-arr">›</span>
+      </div>
+      <div class="lb-feat" onclick="activateTab('data')">
+        <div class="lb-feat-ic" style="background:#fef3c7">🗄</div>
+        <div class="lb-feat-txt">
+          <span class="lb-feat-title">Research Data Repository</span>
+          <span class="lb-feat-desc">Domain + generalist repos · FAIR alignment · certification · re3data &amp; FAIRsharing verification</span>
+        </div>
+        <span class="lb-feat-arr">›</span>
+      </div>
+      <div class="lb-feat" onclick="window.open('https://khazna.ku.ac.ae','_blank')">
+        <div class="lb-feat-ic" style="background:#ede9fe">🏛️</div>
+        <div class="lb-feat-txt">
+          <span class="lb-feat-title">Deposit to Khazna</span>
+          <span class="lb-feat-desc">KU institutional repository · always recommended · metadata-first rule for data deposits · khazna@ku.ac.ae</span>
+        </div>
+        <span class="lb-feat-arr">›</span>
+      </div>
     </div>
   </div>
-</section>
+  <div class="lb-contact">
+    <div class="lb-contact-ic">📚</div>
+    <div class="lb-contact-txt">
+      <span class="lb-contact-title">Need help? Contact KU Library</span>
+      <span class="lb-contact-sub">
+        <a href="https://library.ku.ac.ae/lib" target="_blank">library.ku.ac.ae/lib</a>
+        &nbsp;·&nbsp;
+        <a href="mailto:khazna@ku.ac.ae">khazna@ku.ac.ae</a>
+      </span>
+    </div>
+    <a href="https://library.ku.ac.ae/lib" target="_blank" class="lb-contact-btn">Contact Library</a>
+  </div>
+</div>
 
 <!-- ── Tabs ─────────────────────────────────────────────────────────────── -->
 <div class="tabs-bar">
