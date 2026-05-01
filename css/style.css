@@ -41,7 +41,7 @@ h1,h2,h3 { font-family: 'DM Serif Display', serif; line-height: 1.2; }
 /* Header */
 .site-header {
   background: linear-gradient(135deg, #312e81 0%, #4338ca 50%, #4f46e5 100%);
-  color: white; position: sticky; top: 0; z-index: 100;
+  color: white; position: relative; z-index: 100;
   box-shadow: 0 2px 20px rgba(67,56,202,.4);
 }
 .header-inner {
@@ -97,7 +97,7 @@ h1,h2,h3 { font-family: 'DM Serif Display', serif; line-height: 1.2; }
 /* Tabs */
 .tabs-bar {
   background: white; border-bottom: 2px solid var(--border);
-  position: sticky; top: 68px; z-index: 90; box-shadow: var(--shadow-sm);
+  position: sticky; top: 0; z-index: 90; box-shadow: var(--shadow-sm);
 }
 .tabs-inner { max-width: 1100px; margin: 0 auto; display: flex; }
 .tab-btn {
@@ -457,3 +457,111 @@ textarea { resize: vertical; min-height: 90px; }
 .mt-6     { margin-top: 24px; }
 .divider  { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
 .space-y > * + * { margin-top: 18px; }
+
+/* ── LibBee-style welcome hero ─────────────────────────────────────────── */
+.site-header { background: #1a2744; }
+.brand-bee {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: white; display: flex; align-items: center;
+  justify-content: center; font-size: 20px; flex-shrink: 0;
+}
+
+/* Remove old hero gradient — replaced by lb-welcome */
+.hero { display: none; }
+
+.lb-welcome {
+  background: #f0f2f5; padding: 32px 20px 36px;
+  display: flex; flex-direction: column; align-items: center; gap: 20px;
+}
+
+/* Mascot */
+.lb-mascot { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+.lb-bee {
+  width: 84px; height: 84px; border-radius: 50%;
+  background: white; border: 3px solid #e5e7eb;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 44px; box-shadow: 0 4px 16px rgba(0,0,0,.08);
+}
+.lb-title { font-family: 'DM Serif Display', serif; font-size: 24px; color: #1a2744; font-weight: 400; }
+.lb-sub { font-size: 13px; color: #6b7280; max-width: 400px; line-height: 1.6; }
+
+/* Main hero card */
+.lb-card {
+  background: white; border: 1px solid #e5e7eb;
+  border-radius: 14px; width: 100%; max-width: 580px;
+  overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,.06);
+}
+.lb-card-head {
+  background: linear-gradient(135deg, #1a2744 0%, #2d3f6b 100%);
+  padding: 20px 22px;
+}
+.lb-card-eyebrow {
+  font-size: 10px; font-family: 'JetBrains Mono', monospace;
+  color: rgba(255,255,255,.5); letter-spacing: .1em;
+  text-transform: uppercase; margin-bottom: 8px;
+}
+.lb-card-title {
+  font-family: 'DM Serif Display', serif; font-size: 17px;
+  color: white; line-height: 1.4;
+}
+.lb-card-title em { font-style: italic; color: #a5b4fc; }
+
+/* Stats row */
+.lb-stats {
+  display: flex; margin-top: 16px;
+  border-top: 1px solid rgba(255,255,255,.1); padding-top: 14px;
+}
+.lb-stat { flex: 1; text-align: center; }
+.lb-stat + .lb-stat { border-left: 1px solid rgba(255,255,255,.1); }
+.lb-stat-n { font-family: 'DM Serif Display', serif; font-size: 20px; color: white; display: block; line-height: 1; }
+.lb-stat-l { font-size: 10px; color: rgba(255,255,255,.4); display: block; margin-top: 3px; }
+.lb-stat-sep { width: 0; }
+
+/* Feature rows */
+.lb-features { display: flex; flex-direction: column; }
+.lb-feat {
+  display: flex; align-items: center; gap: 14px;
+  padding: 13px 20px; border-bottom: 1px solid #f3f4f6;
+  cursor: pointer; transition: background .15s;
+}
+.lb-feat:last-child { border-bottom: none; }
+.lb-feat:hover { background: #fafbff; }
+.lb-feat-ic {
+  width: 38px; height: 38px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+.lb-feat-txt { flex: 1; min-width: 0; }
+.lb-feat-title { font-size: 13px; font-weight: 600; color: #111827; display: block; line-height: 1.3; }
+.lb-feat-desc { font-size: 11px; color: #9ca3af; display: block; margin-top: 2px; line-height: 1.5; }
+.lb-feat-arr { color: #d1d5db; font-size: 18px; flex-shrink: 0; margin-left: auto; }
+.lb-feat:hover .lb-feat-arr { color: #1a2744; }
+
+/* Contact bar */
+.lb-contact {
+  background: white; border: 1px solid #e5e7eb; border-radius: 12px;
+  padding: 13px 18px; width: 100%; max-width: 580px;
+  display: flex; align-items: center; gap: 12px;
+}
+.lb-contact-ic {
+  width: 34px; height: 34px; background: #e8ecf5;
+  border-radius: 8px; display: flex; align-items: center;
+  justify-content: center; font-size: 16px; flex-shrink: 0;
+}
+.lb-contact-txt { flex: 1; }
+.lb-contact-title { font-size: 13px; font-weight: 600; color: #1a2744; display: block; }
+.lb-contact-sub { font-size: 11px; color: #9ca3af; display: block; margin-top: 2px; }
+.lb-contact-sub a { color: #4338ca; text-decoration: none; }
+.lb-contact-sub a:hover { text-decoration: underline; }
+.lb-contact-btn {
+  background: #1a2744; color: white; border: none;
+  border-radius: 8px; padding: 8px 16px; font-size: 12px;
+  font-weight: 500; cursor: pointer; text-decoration: none;
+  font-family: 'DM Sans', sans-serif; white-space: nowrap;
+  transition: background .2s;
+}
+.lb-contact-btn:hover { background: #243560; }
+
+/* Tabs — navy active state */
+.tab-btn.active { color: #1a2744; border-bottom-color: #1a2744; }
+.tab-btn:hover  { color: #1a2744; }
