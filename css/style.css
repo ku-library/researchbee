@@ -113,8 +113,8 @@ h1,h2,h3 { font-family: 'DM Serif Display', serif; line-height: 1.2; }
 
 /* Main */
 .main-content { padding: 28px 20px 60px; max-width: 1100px; margin: 0 auto; }
-.tab-panel { display: none; }
-.tab-panel.active { display: block; }
+.tab-panel { display: none !important; }
+.tab-panel.active { display: block !important; }
 
 /* Cards */
 .card {
@@ -470,17 +470,17 @@ textarea { resize: vertical; min-height: 90px; }
 .hero { display: none; }
 
 .lb-welcome {
-  background: #f0f2f5; padding: 32px 20px 36px;
-  display: flex; flex-direction: column; align-items: center; gap: 20px;
+  background: #f0f2f5; padding: 24px 20px 20px;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
 }
 
 /* Mascot */
-.lb-mascot { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+.lb-mascot { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
 .lb-bee {
-  width: 84px; height: 84px; border-radius: 50%;
+  width: 72px; height: 72px; border-radius: 50%;
   background: white; border: 3px solid #e5e7eb;
   display: flex; align-items: center; justify-content: center;
-  font-size: 44px; box-shadow: 0 4px 16px rgba(0,0,0,.08);
+  font-size: 36px; box-shadow: 0 4px 16px rgba(0,0,0,.08);
 }
 .lb-title { font-family: 'DM Serif Display', serif; font-size: 24px; color: #1a2744; font-weight: 400; }
 .lb-sub { font-size: 13px; color: #6b7280; max-width: 400px; line-height: 1.6; }
