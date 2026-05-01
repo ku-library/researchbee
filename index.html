@@ -67,6 +67,55 @@
 
   <!-- ── Tab 1: Journal submission ────────────────────────────────────── -->
   <div id="tab-journals" class="tab-panel active">
+
+    <!-- Mode selector -->
+    <div class="mode-selector">
+      <button class="mode-btn active" data-mode="subject" onclick="switchMode('subject')">
+        <span class="mode-icon">📊</span>
+        <div class="mode-text">
+          <span class="mode-title">Browse by subject</span>
+          <span class="mode-desc">Find top journals by discipline</span>
+        </div>
+      </button>
+      <button class="mode-btn" data-mode="manuscript" onclick="switchMode('manuscript')">
+        <span class="mode-icon">📝</span>
+        <div class="mode-text">
+          <span class="mode-title">Analyse manuscript</span>
+          <span class="mode-desc">Get personalised recommendations</span>
+        </div>
+      </button>
+    </div>
+
+    <!-- Subject browse mode -->
+    <div id="mode-subject">
+      <form id="subject-form">
+        <div class="card">
+          <div class="card-header">
+            <h2>📊 Browse journals by subject</h2>
+            <p>Type any subject, discipline, or research area. Spelling corrections and nearest matches are handled automatically.</p>
+          </div>
+          <div class="card-body">
+            <div class="form-group" style="max-width:500px">
+              <label for="s-subject">Subject / discipline <span class="req">*</span></label>
+              <input id="s-subject" type="text" required
+                placeholder="e.g. Petroleum Engineering, Machine Learning, Cardiology..."
+                autocomplete="off">
+              <div style="font-size:12px;color:var(--text-muted);margin-top:4px">
+                Try: Computer Science, Medicine, Environmental Science, Library Science, Physics...
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary" style="max-width:300px;margin-top:8px">
+              Search journals
+            </button>
+          </div>
+        </div>
+      </form>
+      <div id="subject-progress" class="progress-box"></div>
+      <div id="subject-results" class="hidden"></div>
+    </div>
+
+    <!-- Manuscript analyse mode (existing - hidden by default) -->
+    <div id="mode-manuscript" style="display:none">
     <form id="journal-form">
       <div class="card">
         <div class="card-header">
@@ -201,7 +250,8 @@
 
     <div id="journal-progress" class="progress-box"></div>
     <div id="journal-results" class="hidden"></div>
-  </div>
+    </div><!-- /mode-manuscript -->
+  </div><!-- /tab-journals -->
 
   <!-- ── Tab 2: License checking ──────────────────────────────────────── -->
   <div id="tab-license" class="tab-panel">
