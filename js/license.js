@@ -1,4 +1,4 @@
-// license.js — License checking tab
+// license.js - License checking tab
 import { callAPI, getModel } from "./api.js";
 import { showProgress, setStep, doneProgress } from "./app.js";
 import {
@@ -15,7 +15,7 @@ export function licenseTab() {
     e.preventDefault();
     const submitBtn = form.querySelector(".btn-primary");
     submitBtn.disabled = true;
-    submitBtn.innerHTML = `⏳ Checking policy...`;
+    submitBtn.innerHTML = ` Checking policy...`;
     results.innerHTML = "";
     results.classList.remove("hidden");
 
@@ -30,14 +30,14 @@ export function licenseTab() {
       setStep("license-progress", 1);
       const data = await callAPI("/api/check-license", { license_input, model: getModel() });
       setStep("license-progress", 2);
-      doneProgress("license-progress", "✅ Policy check complete");
+      doneProgress("license-progress", "[OK] Policy check complete");
       setTimeout(() => renderLicenseResults(data.result, results), 400);
     } catch (err) {
       document.getElementById("license-progress").innerHTML =
         `<div class="p-step" style="color:var(--danger)"><span class="p-dot" style="background:var(--danger)"></span><span>Error: ${esc(err.message)}</span></div>`;
     } finally {
       submitBtn.disabled = false;
-      submitBtn.innerHTML = `🛡 Check Green OA policy`;
+      submitBtn.innerHTML = ` Check Green OA policy`;
     }
   });
 }
@@ -62,7 +62,7 @@ function renderPolicyCard(j) {
     oa.licence_notes          ? `<p><strong>Licence notes:</strong> ${esc(oa.licence_notes)}</p>` : "",
     oa.repository_action_note ? `<p><strong>Repository action:</strong> ${esc(oa.repository_action_note)}</p>` : "",
     oa.evidence_note          ? `<p style="font-style:italic;font-size:12px;color:var(--text-muted)">Evidence: ${esc(oa.evidence_note)}</p>` : "",
-    oa.risk_flag              ? `<p class="p-risk">⚠ <span><strong>Risk:</strong> ${esc(oa.risk_flag)}</span></p>` : "",
+    oa.risk_flag              ? `<p class="p-risk">[!] <span><strong>Risk:</strong> ${esc(oa.risk_flag)}</span></p>` : "",
   ].filter(Boolean).join("");
 
   const vl = j.verify_links || {};
@@ -76,7 +76,7 @@ function renderPolicyCard(j) {
   return `
     <div class="card j-card">
       <div class="j-header">
-        <div class="j-meta">${esc(j.publisher || "")}${j.issn ? ` · ISSN ${esc(j.issn)}` : ""}</div>
+        <div class="j-meta">${esc(j.publisher || "")}${j.issn ? ` . ISSN ${esc(j.issn)}` : ""}</div>
         <div class="j-title">${esc(j.name)}</div>
         <div class="badge-row">
           ${oaStatusBadge(oa.policy_status || "Not confirmed")}
@@ -84,7 +84,7 @@ function renderPolicyCard(j) {
       </div>
       <div class="j-body">
         <div>
-          <h5 style="font-size:14px;font-weight:600;margin-bottom:10px">🛡 Green OA / self-archiving by version</h5>
+          <h5 style="font-size:14px;font-weight:600;margin-bottom:10px"> Green OA / self-archiving by version</h5>
           <div class="version-list">
             ${renderVersionBlock("Submitted version / preprint", oa.preprint)}
             ${renderVersionBlock("Accepted manuscript (AAM / postprint)", oa.postprint)}
@@ -101,7 +101,7 @@ function renderDepositRecommendation(r) {
   if (!r) return "";
   return `
     <div class="card rec-card mt-6">
-      <div class="card-header"><h2>📦 Repository deposit recommendation</h2></div>
+      <div class="card-header"><h2> Repository deposit recommendation</h2></div>
       <div class="card-body space-y">
         <dl class="rec-grid">
           <div class="rec-item"><dt>Best version to deposit</dt><dd>${esc(r.best_version_to_deposit)}</dd></div>
@@ -113,7 +113,7 @@ function renderDepositRecommendation(r) {
         ${r.khazna_note ? `<div class="policy-notes"><p><strong>Khazna note:</strong> ${esc(r.khazna_note)}</p></div>` : ""}
         ${r.manual_checks_required?.length ? `
           <div>
-            <h5 style="font-size:13px;font-weight:600;margin-bottom:6px">⚠ Manual checks required</h5>
+            <h5 style="font-size:13px;font-weight:600;margin-bottom:6px">[!] Manual checks required</h5>
             <ul class="checks-list">${r.manual_checks_required.map(c => `<li>${esc(c)}</li>`).join("")}</ul>
           </div>` : ""}
       </div>
@@ -126,11 +126,11 @@ function renderLicenseResults(result, container) {
     <div class="results-header">
       <h2 class="results-title">Policy result</h2>
       <div class="results-meta">
-        <button class="btn btn-ghost" id="license-reset">↺ Start over</button>
+        <button class="btn btn-ghost" id="license-reset"> Start over</button>
       </div>
     </div>
 
-    <h3 style="font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:14px">🛡 Green OA / self-archiving by version</h3>
+    <h3 style="font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:14px"> Green OA / self-archiving by version</h3>
     ${journals.map(j => renderPolicyCard(j)).join("")}
     ${renderDepositRecommendation(result.repository_recommendation)}
     ${result.khazna ? renderKhaznaCard(result.khazna, "article") : ""}

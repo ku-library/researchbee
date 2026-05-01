@@ -1,4 +1,4 @@
-// render.js — shared rendering helpers
+// render.js - shared rendering helpers
 
 export function esc(str) {
   if (!str) return "";
@@ -60,24 +60,24 @@ export function renderVerifyLinks(vl, showScopusPrimary = true) {
   return `
     <div class="verify-row">
       <span class="verify-lbl">Verify on:</span>
-      ${showScopusPrimary && vl.scopus ? `<a href="${esc(vl.scopus)}" target="_blank" class="vlink vlink-scopus">📊 Scopus ↗</a>` : ""}
-      ${vl.sherpa_romeo ? `<a href="${esc(vl.sherpa_romeo)}" target="_blank" class="vlink">SHERPA ↗</a>` : ""}
-      ${!showScopusPrimary && vl.scopus ? `<a href="${esc(vl.scopus)}" target="_blank" class="vlink">Scopus ↗</a>` : ""}
-      ${vl.doaj       ? `<a href="${esc(vl.doaj)}" target="_blank" class="vlink">DOAJ ↗</a>` : ""}
-      ${vl.openalex   ? `<a href="${esc(vl.openalex)}" target="_blank" class="vlink">OpenAlex ↗</a>` : ""}
+      ${showScopusPrimary && vl.scopus ? `<a href="${esc(vl.scopus)}" target="_blank" class="vlink vlink-scopus"> Scopus </a>` : ""}
+      ${vl.sherpa_romeo ? `<a href="${esc(vl.sherpa_romeo)}" target="_blank" class="vlink">SHERPA </a>` : ""}
+      ${!showScopusPrimary && vl.scopus ? `<a href="${esc(vl.scopus)}" target="_blank" class="vlink">Scopus </a>` : ""}
+      ${vl.doaj       ? `<a href="${esc(vl.doaj)}" target="_blank" class="vlink">DOAJ </a>` : ""}
+      ${vl.openalex   ? `<a href="${esc(vl.openalex)}" target="_blank" class="vlink">OpenAlex </a>` : ""}
     </div>`;
 }
 
 export function renderOpenAlexMetrics(oa) {
   if (!oa) return "";
-  const fmt = (n) => n != null ? Number(n).toLocaleString() : "—";
-  const tags = [oa.is_in_doaj ? "· DOAJ-listed" : "", oa.is_oa ? "· OA journal" : ""].filter(Boolean).join(" ");
+  const fmt = (n) => n != null ? Number(n).toLocaleString() : "-";
+  const tags = [oa.is_in_doaj ? ". DOAJ-listed" : "", oa.is_oa ? ". OA journal" : ""].filter(Boolean).join(" ");
   return `
     <dl class="oa-metrics">
       <div class="oa-m"><dt>Works</dt><dd>${fmt(oa.works_count)}</dd></div>
       <div class="oa-m"><dt>Citations</dt><dd>${fmt(oa.cited_by_count)}</dd></div>
       <div class="oa-m"><dt>h-index</dt><dd>${fmt(oa.h_index)}</dd></div>
-      <div class="oa-m"><dt>2-yr citedness</dt><dd>${oa.two_yr_mean_citedness != null ? Number(oa.two_yr_mean_citedness).toFixed(2) : "—"}</dd></div>
+      <div class="oa-m"><dt>2-yr citedness</dt><dd>${oa.two_yr_mean_citedness != null ? Number(oa.two_yr_mean_citedness).toFixed(2) : "-"}</dd></div>
       <div class="oa-src">Source: OpenAlex ${tags}</div>
     </dl>`;
 }
@@ -91,18 +91,18 @@ export function renderRankingBlock(r) {
   const badge = isConfirmed
     ? `<span class="badge b-success">✓ Verified by ISSN</span>`
     : isDerived
-    ? `<span class="badge b-warning">⚠ OpenAlex-derived</span>`
-    : `<span class="badge b-danger">⚠ Unverified — check manually</span>`;
+    ? `<span class="badge b-warning">[!] OpenAlex-derived</span>`
+    : `<span class="badge b-danger">[!] Unverified - check manually</span>`;
   return `
     <div class="rank-box ${cls}">
       <div class="rank-head">
-        <h5>📊 Journal metrics</h5>
+        <h5> Journal metrics</h5>
         ${badge}
       </div>
       <dl class="rank-grid">
-        <div class="rank-item"><dt>Source</dt><dd>${esc(r.source || "—")}</dd></div>
-        <div class="rank-item"><dt>Year</dt><dd>${esc(r.year || "—")}</dd></div>
-        <div class="rank-item"><dt>Quartile</dt><dd>${r.quartile ? `<span class="badge ${["b-q1","b-q2","b-q3","b-q4"][["Q1","Q2","Q3","Q4"].indexOf(r.quartile)] || "b-muted"}">${esc(r.quartile)}</span>` : "—"}</dd></div>
+        <div class="rank-item"><dt>Source</dt><dd>${esc(r.source || "-")}</dd></div>
+        <div class="rank-item"><dt>Year</dt><dd>${esc(r.year || "-")}</dd></div>
+        <div class="rank-item"><dt>Quartile</dt><dd>${r.quartile ? `<span class="badge ${["b-q1","b-q2","b-q3","b-q4"][["Q1","Q2","Q3","Q4"].indexOf(r.quartile)] || "b-muted"}">${esc(r.quartile)}</span>` : "-"}</dd></div>
         ${r.percentile ? `<div class="rank-item"><dt>Rank/Percentile</dt><dd>${esc(r.percentile)}</dd></div>` : ""}
         ${r.category   ? `<div class="rank-item"><dt>Category</dt><dd style="font-size:11px">${esc(r.category)}</dd></div>` : ""}
         ${r.h_index    ? `<div class="rank-item"><dt>h-index</dt><dd>${esc(r.h_index)}</dd></div>` : ""}
@@ -119,9 +119,9 @@ export function renderKhaznaCard(k, mode = "article") {
   return `
     <div class="khazna-card">
       <div class="khazna-head">
-        <span style="font-size:22px">🏛️</span>
+        <span style="font-size:22px">️</span>
         <div>
-          <h3>Khazna — KU Institutional Repository</h3>
+          <h3>Khazna - KU Institutional Repository</h3>
           <div style="font-size:12px;opacity:.8">khazna.ku.ac.ae</div>
         </div>
       </div>
@@ -134,7 +134,7 @@ export function renderKhaznaCard(k, mode = "article") {
         <div class="khazna-actions">
           <a href="${esc(k.url || "https://khazna.ku.ac.ae")}" target="_blank" class="k-btn k-btn-fill">🔗 Visit Khazna</a>
           <a href="mailto:${esc(k.contact || "khazna@ku.ac.ae")}" class="k-btn k-btn-outline">✉ khazna@ku.ac.ae</a>
-          <a href="${esc(k.library_url || "https://library.ku.ac.ae/lib")}" target="_blank" class="k-btn k-btn-outline">📚 KU Library</a>
+          <a href="${esc(k.library_url || "https://library.ku.ac.ae/lib")}" target="_blank" class="k-btn k-btn-outline"> KU Library</a>
         </div>
       </div>
     </div>`;
@@ -144,7 +144,7 @@ export function renderHelpCard() {
   return `
     <div class="help-card">
       <div class="help-left">
-        <span class="help-icon">📚</span>
+        <span class="help-icon"></span>
         <div class="help-text">
           <h4>Need help? Contact KU Library</h4>
           <p>Not sure what to deposit, which version, or how? Our librarians can advise on open access, self-archiving, and research data management.</p>
@@ -163,10 +163,10 @@ export function renderRepoCard(r, idx) {
   return `
     <div class="card j-card r-card ${isKhazna ? "is-khazna" : ""}">
       <div class="j-header">
-        <div class="j-meta">#${idx + 1} · ${esc(r.type)} · ${esc(r.cost)}${isKhazna ? " · KU Institutional" : ""}</div>
+        <div class="j-meta">#${idx + 1} . ${esc(r.type)} . ${esc(r.cost)}${isKhazna ? " . KU Institutional" : ""}</div>
         <div class="j-title">
           ${esc(r.name)}
-          ${r.url ? `<a href="${esc(r.url)}" target="_blank" style="font-size:14px;font-family:'DM Sans',sans-serif;font-weight:400;color:var(--primary);margin-left:8px">↗ visit</a>` : ""}
+          ${r.url ? `<a href="${esc(r.url)}" target="_blank" style="font-size:14px;font-family:'DM Sans',sans-serif;font-weight:400;color:var(--primary);margin-left:8px"> visit</a>` : ""}
         </div>
         <div class="badge-row">
           ${confidenceBadge(r.confidence)}
@@ -191,18 +191,18 @@ export function renderRepoCard(r, idx) {
           <div><dt>Sensitive data</dt><dd>${esc(r.sensitive_data_suitable)}</dd></div>
         </dl>
         ${r.funder_compliance_note ? `<div class="policy-notes"><p><strong>Funder compliance:</strong> ${esc(r.funder_compliance_note)}</p></div>` : ""}
-        ${r.risk_flag ? `<p style="color:var(--danger);font-size:13px;display:flex;gap:6px;align-items:flex-start"><span>⚠</span><span>${esc(r.risk_flag)}</span></p>` : ""}
+        ${r.risk_flag ? `<p style="color:var(--danger);font-size:13px;display:flex;gap:6px;align-items:flex-start"><span>[!]</span><span>${esc(r.risk_flag)}</span></p>` : ""}
         <p style="font-size:12px"><strong>Verification:</strong> ${esc(r.verification_status)}</p>
         ${!isKhazna ? `
           <div class="verify-row">
             <span class="verify-lbl">Verify on:</span>
-            ${vl.re3data    ? `<a href="${esc(vl.re3data)}"    target="_blank" class="vlink">re3data ↗</a>` : ""}
-            ${vl.fairsharing? `<a href="${esc(vl.fairsharing)}" target="_blank" class="vlink">FAIRsharing ↗</a>` : ""}
+            ${vl.re3data    ? `<a href="${esc(vl.re3data)}"    target="_blank" class="vlink">re3data </a>` : ""}
+            ${vl.fairsharing? `<a href="${esc(vl.fairsharing)}" target="_blank" class="vlink">FAIRsharing </a>` : ""}
           </div>` : `
           <div class="verify-row">
             <span class="verify-lbl">Contact:</span>
             <a href="mailto:khazna@ku.ac.ae" class="vlink">khazna@ku.ac.ae</a>
-            <a href="https://khazna.ku.ac.ae" target="_blank" class="vlink">khazna.ku.ac.ae ↗</a>
+            <a href="https://khazna.ku.ac.ae" target="_blank" class="vlink">khazna.ku.ac.ae </a>
           </div>`}
       </div>
     </div>`;
@@ -212,7 +212,7 @@ export function renderNextActions(actions, global_notes) {
   if (!actions?.length) return "";
   return `
     <div class="card mt-6">
-      <div class="card-header"><h2>✅ Next best actions</h2></div>
+      <div class="card-header"><h2>[OK] Next best actions</h2></div>
       <div class="card-body">
         <ol class="actions-list">
           ${actions.map((a, i) => `
@@ -230,7 +230,7 @@ export function renderManuscriptUnderstanding(m) {
   if (!m) return "";
   return `
     <div class="card understanding">
-      <div class="card-header"><h2>📄 Manuscript understanding</h2></div>
+      <div class="card-header"><h2> Manuscript understanding</h2></div>
       <div class="card-body">
         <p style="font-size:14px">${esc(m.summary)}</p>
         <div class="tag-row">

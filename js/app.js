@@ -1,4 +1,4 @@
-// app.js — tab router, model selector, progress indicator
+// app.js - tab router, model selector, progress indicator
 import { journalTab }    from "./journal.js";
 import { licenseTab }    from "./license.js";
 import { repositoryTab } from "./repository.js";
@@ -28,7 +28,7 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
   btn.addEventListener("click", () => activateTab(btn.dataset.tab));
 });
 
-// Initialise — show journals tab by default
+// Initialise - show journals tab by default
 activateTab("journals");
 
 // ── Model selector ─────────────────────────────────────────────────────────
@@ -39,8 +39,8 @@ document.querySelectorAll(".model-btn").forEach(btn => {
     const hint = document.getElementById("model-hint");
     if (hint) {
       hint.textContent = btn.dataset.model === "gpt-4o"
-        ? "Deeper analysis · slower · higher cost"
-        : "Default · faster · lower cost";
+        ? "Deeper analysis . slower . higher cost"
+        : "Default . faster . lower cost";
     }
   });
 });

@@ -1,4 +1,4 @@
-// repository.js — Data repository tab
+// repository.js - Data repository tab
 import { callAPI, getModel } from "./api.js";
 import { showProgress, setStep, doneProgress } from "./app.js";
 import {
@@ -15,7 +15,7 @@ export function repositoryTab() {
     e.preventDefault();
     const submitBtn = form.querySelector(".btn-primary");
     submitBtn.disabled = true;
-    submitBtn.innerHTML = `⏳ Finding repositories...`;
+    submitBtn.innerHTML = ` Finding repositories...`;
     results.innerHTML = "";
     results.classList.remove("hidden");
 
@@ -30,14 +30,14 @@ export function repositoryTab() {
       setStep("repo-progress", 1);
       const data = await callAPI("/api/find-repository", { dataset, model: getModel() });
       setStep("repo-progress", 2);
-      doneProgress("repo-progress", `✅ Repository search complete`);
+      doneProgress("repo-progress", `[OK] Repository search complete`);
       setTimeout(() => renderRepoResults(data.result, results), 400);
     } catch (err) {
       document.getElementById("repo-progress").innerHTML =
         `<div class="p-step" style="color:var(--danger)"><span class="p-dot" style="background:var(--danger)"></span><span>Error: ${esc(err.message)}</span></div>`;
     } finally {
       submitBtn.disabled = false;
-      submitBtn.innerHTML = `🗄 Find best repositories`;
+      submitBtn.innerHTML = ` Find best repositories`;
     }
   });
 }
@@ -100,7 +100,7 @@ function renderDepositStrategy(s) {
   if (!s) return "";
   return `
     <div class="card rec-card mt-6">
-      <div class="card-header"><h2>📋 Deposit strategy</h2></div>
+      <div class="card-header"><h2> Deposit strategy</h2></div>
       <div class="card-body space-y">
         <dl class="rec-grid">
           <div class="rec-item"><dt>Primary choice</dt><dd>${esc(s.primary_choice)}</dd></div>
@@ -109,7 +109,7 @@ function renderDepositStrategy(s) {
         </dl>
         ${s.khazna_metadata_note ? `
           <div class="khazna-tip" style="background:var(--primary-xlight);border-color:var(--primary-light)">
-            <span>🏛️</span><span style="color:var(--primary)">${esc(s.khazna_metadata_note)}</span>
+            <span>️</span><span style="color:var(--primary)">${esc(s.khazna_metadata_note)}</span>
           </div>` : ""}
         ${s.deposit_workflow?.length ? `
           <div>
@@ -120,7 +120,7 @@ function renderDepositStrategy(s) {
           </div>` : ""}
         ${s.manual_checks_required?.length ? `
           <div>
-            <h5 style="font-size:13px;font-weight:600;margin-bottom:6px">⚠ Manual checks required</h5>
+            <h5 style="font-size:13px;font-weight:600;margin-bottom:6px">[!] Manual checks required</h5>
             <ul class="checks-list">${s.manual_checks_required.map(c => `<li>${esc(c)}</li>`).join("")}</ul>
           </div>` : ""}
       </div>
@@ -134,13 +134,13 @@ function renderRepoResults(result, container) {
       <h2 class="results-title">Recommended repositories</h2>
       <div class="results-meta">
         <span class="count-chip">${repos.length} repositories</span>
-        <button class="btn btn-ghost" id="repo-reset">↺ Start over</button>
+        <button class="btn btn-ghost" id="repo-reset"> Start over</button>
       </div>
     </div>
 
     ${renderDatasetUnderstanding(result.dataset_understanding)}
 
-    <h3 style="font-family:'DM Serif Display',serif;font-size:22px;margin:20px 0 14px">🗄 Recommended repositories</h3>
+    <h3 style="font-family:'DM Serif Display',serif;font-size:22px;margin:20px 0 14px"> Recommended repositories</h3>
     ${repos.map((r, i) => renderRepoCard(r, i)).join("")}
 
     ${renderDepositStrategy(result.deposit_strategy)}
