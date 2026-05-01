@@ -4,25 +4,32 @@ import { licenseTab }    from "./license.js";
 import { repositoryTab } from "./repository.js";
 
 // ── Tab routing ────────────────────────────────────────────────────────────
-function activateTab(target, scroll = true) {
+function activateTab(target) {
+  // Deactivate all tab buttons
   document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-  document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
-  document.querySelector(`[data-tab="${target}"]`)?.classList.add("active");
-  document.getElementById(`tab-${target}`)?.classList.add("active");
-  if (scroll) {
-    document.querySelector(".tabs-bar")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  // Hide all tab panels
+  document.querySelectorAll(".tab-panel").forEach(p => {
+    p.classList.remove("active");
+    p.style.display = "none";
+  });
+  // Activate chosen tab button
+  const btn = document.querySelector(`.tab-btn[data-tab="${target}"]`);
+  if (btn) btn.classList.add("active");
+  // Show chosen tab panel
+  const panel = document.getElementById(`tab-${target}`);
+  if (panel) {
+    panel.classList.add("active");
+    panel.style.display = "block";
   }
 }
 
-// Tab buttons
+// Wire up tab buttons
 document.querySelectorAll(".tab-btn").forEach(btn => {
   btn.addEventListener("click", () => activateTab(btn.dataset.tab));
 });
 
-// Hero feature rows — use data-goto attribute instead of inline onclick
-document.querySelectorAll("[data-goto]").forEach(el => {
-  el.addEventListener("click", () => activateTab(el.dataset.goto));
-});
+// Initialise — show journals tab by default
+activateTab("journals");
 
 // ── Model selector ─────────────────────────────────────────────────────────
 document.querySelectorAll(".model-btn").forEach(btn => {
@@ -38,14 +45,12 @@ document.querySelectorAll(".model-btn").forEach(btn => {
   });
 });
 
-// ── Progress helpers (exported for use in tab modules) ─────────────────────
+// ── Progress helpers ───────────────────────────────────────────────────────
 export function showProgress(containerId, steps) {
   const wrap = document.getElementById(containerId);
   if (!wrap) return;
-  wrap.innerHTML = steps.map((s, i) =>
-    `<div class="p-step" id="ps-${containerId}-${i}">
-       <span class="p-dot"></span><span>${s}</span>
-     </div>`
+  wrap.innerHTML = steps.map(s =>
+    `<div class="p-step"><span class="p-dot"></span><span>${s}</span></div>`
   ).join("");
   wrap.classList.add("show");
   setStep(containerId, 0);
