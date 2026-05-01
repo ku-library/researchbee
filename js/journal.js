@@ -229,3 +229,156 @@ function renderJournalResults(result, container) {
 
   container.scrollIntoView({ behavior: "smooth", block: "start" });
 }
+
+// ── Subject browse mode (NEW - does not affect existing journalTab) ────────
+export function subjectTab() {
+  const form    = document.getElementById("subject-form");
+  const results = document.getElementById("subject-results");
+  if (!form) return;
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const input   = document.getElementById("s-subject");
+    const subject = input?.value?.trim();
+    if (!subject) return;
+
+    const submitBtn = form.querySelector(".btn-primary");
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = "Searching journals...";
+    results.innerHTML = "";
+    results.classList.remove("hidden");
+
+    showProgress("subject-progress", [
+      "Identifying your subject...",
+      "Searching journal database...",
+      "Building results..."
+    ]);
+
+    try {
+      setStep("subject-progress", 1);
+      const data = await callAPI("/api/browse-subject", {
+        subject,
+        model: getModel()
+      });
+      setStep("subject-progress", 2);
+      doneProgress("subject-progress",
+        data.result.journals?.length
+          ? `Found ${data.result.journals.length} journals`
+          : "Search complete"
+      );
+      setTimeout(() => renderSubjectResults(data.result, results), 300);
+    } catch (err) {
+      document.getElementById("subject-progress").innerHTML =
+        `<div class="p-step" style="color:var(--danger)">
+           <span class="p-dot" style="background:var(--danger)"></span>
+           <span>Error: ${esc(err.message)}</span>
+         </div>`;
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = "Search journals";
+    }
+  });
+
+  // Reset button
+  document.getElementById("subject-reset")?.addEventListener("click", resetSubject);
+}
+
+function resetSubject() {
+  const results = document.getElementById("subject-results");
+  if (results) { results.innerHTML = ""; results.classList.add("hidden"); }
+  document.getElementById("subject-progress")?.classList.remove("show");
+  document.getElementById("subject-form")?.reset();
+}
+
+function renderSubjectResults(result, container) {
+  const journals = result.journals || [];
+
+  // Not found state
+  if (result.confidence === "not_found" || !journals.length) {
+    container.innerHTML = `
+      <div class="subj-notfound">
+        <div class="subj-notfound-icon">?</div>
+        <h3>No journals found</h3>
+        <p>${esc(result.user_message || "Try a different subject term.")}</p>
+        <button class="btn btn-ghost" onclick="document.getElementById('subject-form').reset();document.getElementById('subject-results').classList.add('hidden')">
+          Try again
+        </button>
+      </div>`;
+    return;
+  }
+
+  // User message banner (correction / near match)
+  const banner = result.user_message
+    ? `<div class="subj-banner">
+         <span class="subj-banner-icon">${result.confidence === "near" ? "Corrected:" : "Note:"}</span>
+         ${esc(result.user_message)}
+       </div>`
+    : "";
+
+  // Build table rows
+  const rows = journals.map((j, i) => {
+    const vl = j.verify_links || {};
+    const q  = j.quartile;
+    const qBadge = q
+      ? `<span class="badge ${{"Q1":"b-q1","Q2":"b-q2","Q3":"b-q3","Q4":"b-q4"}[q]||"b-muted"}">${esc(q)}</span>`
+      : '<span style="color:var(--text-light);font-size:12px">-</span>';
+    const oaBadge = j.open_access === "Yes"
+      ? '<span class="badge b-success" style="font-size:10px">OA</span>'
+      : "";
+    return `
+      <tr>
+        <td style="color:var(--text-muted);font-size:12px;font-family:'JetBrains Mono',monospace">${i + 1}</td>
+        <td>
+          <strong style="font-size:13px">${esc(j.name)}</strong>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${esc(j.publisher || "")}</div>
+        </td>
+        <td style="font-family:'JetBrains Mono',monospace;font-size:12px">${esc(j.issn || "-")}</td>
+        <td>${qBadge} ${oaBadge}</td>
+        <td style="font-family:'JetBrains Mono',monospace;font-size:12px">${j.h_index || "-"}</td>
+        <td>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            ${vl.scopus       ? `<a href="${esc(vl.scopus)}"       target="_blank" class="el el-scopus">Scopus</a>` : ""}
+            ${vl.sherpa_romeo ? `<a href="${esc(vl.sherpa_romeo)}" target="_blank" class="el el-sherpa">SHERPA</a>` : ""}
+            ${vl.doaj         ? `<a href="${esc(vl.doaj)}"         target="_blank" class="el" style="background:#fef3c7;color:#92400e">DOAJ</a>` : ""}
+          </div>
+        </td>
+      </tr>`;
+  }).join("");
+
+  container.innerHTML = `
+    <div class="results-header">
+      <h2 class="results-title">Top journals: ${esc(result.normalised)}</h2>
+      <div class="results-meta">
+        <span class="count-chip">${journals.length} journals</span>
+        <button class="btn btn-ghost" id="subject-reset-btn">Reset</button>
+      </div>
+    </div>
+
+    ${banner}
+
+    <div class="card" style="overflow:hidden;margin-bottom:20px">
+      <table class="ext-table" style="width:100%">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Journal</th>
+            <th>ISSN</th>
+            <th>Quartile</th>
+            <th>H-index</th>
+            <th>Verify</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+
+    <div class="subj-tip">
+      <strong>Want deeper analysis?</strong>
+      Switch to <em>Analyse manuscript</em> mode above for full Green OA policy,
+      submission strategy, and personalised recommendations.
+    </div>
+  `;
+
+  document.getElementById("subject-reset-btn")?.addEventListener("click", resetSubject);
+  container.scrollIntoView({ behavior: "smooth", block: "start" });
+}

@@ -1,7 +1,20 @@
 // app.js - tab router, model selector, progress indicator
-import { journalTab }    from "./journal.js";
+import { journalTab, subjectTab } from "./journal.js";
 import { licenseTab }    from "./license.js";
 import { repositoryTab } from "./repository.js";
+
+
+// ── Mode switcher (subject browse vs manuscript analyse) ──────────────────
+function switchMode(mode) {
+  document.querySelectorAll(".mode-btn").forEach(b => {
+    b.classList.toggle("active", b.dataset.mode === mode);
+  });
+  const subjectEl    = document.getElementById("mode-subject");
+  const manuscriptEl = document.getElementById("mode-manuscript");
+  if (subjectEl)    subjectEl.style.display    = mode === "subject"    ? "block" : "none";
+  if (manuscriptEl) manuscriptEl.style.display = mode === "manuscript" ? "block" : "none";
+}
+window.switchMode = switchMode;
 
 // ── Tab routing ────────────────────────────────────────────────────────────
 function activateTab(target) {
@@ -89,5 +102,6 @@ export function hideProgress(containerId) {
 
 // ── Init ───────────────────────────────────────────────────────────────────
 journalTab();
+subjectTab();
 licenseTab();
 repositoryTab();
