@@ -1,20 +1,85 @@
-// api.js — fetch wrapper for Research Navigator backend
-// Set HF_BASE to your HuggingFace Space URL before deploying
-const HF_BASE = "https://nikeshn-researchbee.hf.space";
+// app.js — tab router, model selector, progress indicator
+import { journalTab }    from "./journal.js";
+import { licenseTab }    from "./license.js";
+import { repositoryTab } from "./repository.js";
 
-export async function callAPI(endpoint, payload) {
-  const res = await fetch(`${HF_BASE}${endpoint}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
-    throw new Error(err.error || err.message || `HTTP ${res.status}`);
+// ── Tab routing ────────────────────────────────────────────────────────────
+function activateTab(target, scroll = true) {
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+  document.querySelector(`[data-tab="${target}"]`)?.classList.add("active");
+  document.getElementById(`tab-${target}`)?.classList.add("active");
+  if (scroll) {
+    document.querySelector(".tabs-bar")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
-  return res.json();
 }
 
-export function getModel() {
-  return document.querySelector(".model-btn.active")?.dataset.model || "gpt-4o-mini";
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => activateTab(btn.dataset.tab));
+});
+
+// Allow hero feature rows to activate tabs
+window.activateTab = activateTab;
+
+// ── Model selector ─────────────────────────────────────────────────────────
+document.querySelectorAll(".model-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".model-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    const hint = document.getElementById("model-hint");
+    if (hint) {
+      hint.textContent = btn.dataset.model === "gpt-4o"
+        ? "Deeper analysis · slower · higher cost"
+        : "Default · faster · lower cost";
+    }
+  });
+});
+
+// ── Progress helpers (exported for use in tab modules) ─────────────────────
+export function showProgress(containerId, steps) {
+  const wrap = document.getElementById(containerId);
+  if (!wrap) return;
+  wrap.innerHTML = steps.map((s, i) =>
+    `<div class="p-step" id="ps-${containerId}-${i}">
+       <span class="p-dot"></span><span>${s}</span>
+     </div>`
+  ).join("");
+  wrap.classList.add("show");
+  setStep(containerId, 0);
 }
+
+export function setStep(containerId, idx) {
+  const wrap = document.getElementById(containerId);
+  if (!wrap) return;
+  wrap.querySelectorAll(".p-step").forEach((el, i) => {
+    el.classList.remove("active", "done");
+    if (i < idx)  el.classList.add("done");
+    if (i === idx) el.classList.add("active");
+  });
+}
+
+export function doneProgress(containerId, message) {
+  const wrap = document.getElementById(containerId);
+  if (!wrap) return;
+  wrap.querySelectorAll(".p-step").forEach(el => {
+    el.classList.remove("active");
+    el.classList.add("done");
+  });
+  if (message) {
+    const el = document.createElement("div");
+    el.className = "p-step done";
+    el.style.marginTop = "6px";
+    el.style.fontWeight = "600";
+    el.innerHTML = `<span class="p-dot"></span><span>${message}</span>`;
+    wrap.appendChild(el);
+  }
+}
+
+export function hideProgress(containerId) {
+  document.getElementById(containerId)?.classList.remove("show");
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+journalTab();
+licenseTab();
+repositoryTab();
