@@ -337,9 +337,11 @@ function renderSubjectResults(result, container) {
         <td style="font-family:'JetBrains Mono',monospace;font-size:12px">${j.h_index || "-"}</td>
         <td>
           <div style="display:flex;gap:6px;flex-wrap:wrap">
-            ${vl.scopus       ? `<a href="${esc(vl.scopus)}"       target="_blank" class="el el-scopus">Scopus</a>` : ""}
-            ${vl.sherpa_romeo ? `<a href="${esc(vl.sherpa_romeo)}" target="_blank" class="el el-sherpa">SHERPA</a>` : ""}
-            ${vl.doaj         ? `<a href="${esc(vl.doaj)}"         target="_blank" class="el" style="background:#fef3c7;color:#92400e">DOAJ</a>` : ""}
+            ${vl.scimago        ? `<a href="${esc(vl.scimago)}"        target="_blank" class="el el-scopus">SCImago</a>` : ""}
+            ${vl.sherpa_romeo   ? `<a href="${esc(vl.sherpa_romeo)}"   target="_blank" class="el el-sherpa">SHERPA</a>` : ""}
+            ${vl.doaj           ? `<a href="${esc(vl.doaj)}"           target="_blank" class="el" style="background:#fef3c7;color:#92400e">DOAJ</a>` : ""}
+            ${vl.scopus_sources ? `<a href="${esc(vl.scopus_sources)}" target="_blank" class="el" style="background:#e0e7ff;color:#3730a3">Scopus</a>` : ""}
+            ${vl.issn_display   ? `<span class="copy-chip copy-chip-sm" onclick="copyToClipboard('${esc(vl.issn_display)}',this)" title="Copy ISSN">${esc(vl.issn_display)} &#x1F4CB;</span>` : ""}
           </div>
         </td>
       </tr>`;
