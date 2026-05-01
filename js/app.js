@@ -4,14 +4,24 @@ import { licenseTab }    from "./license.js";
 import { repositoryTab } from "./repository.js";
 
 // ── Tab routing ────────────────────────────────────────────────────────────
+function activateTab(target, scroll = true) {
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+  document.querySelector(`[data-tab="${target}"]`)?.classList.add("active");
+  document.getElementById(`tab-${target}`)?.classList.add("active");
+  if (scroll) {
+    document.querySelector(".tabs-bar")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
+// Tab buttons
 document.querySelectorAll(".tab-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    const target = btn.dataset.tab;
-    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-    document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
-    btn.classList.add("active");
-    document.getElementById(`tab-${target}`)?.classList.add("active");
-  });
+  btn.addEventListener("click", () => activateTab(btn.dataset.tab));
+});
+
+// Hero feature rows — use data-goto attribute instead of inline onclick
+document.querySelectorAll("[data-goto]").forEach(el => {
+  el.addEventListener("click", () => activateTab(el.dataset.goto));
 });
 
 // ── Model selector ─────────────────────────────────────────────────────────
