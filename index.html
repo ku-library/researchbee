@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Research Navigator — Khalifa University Library</title>
+  <meta name="description" content="Find the right journal. Check your rights. Deposit to the right repository. AI-powered publishing and repository assistant for KU researchers.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐝</text></svg>">
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────────────────── -->
+<header class="site-header">
+  <div class="header-inner">
+    <a href="/" class="brand">
+      <span class="brand-icon">🐝</span>
+      <div>
+        <span class="brand-name">Research Navigator</span>
+        <span class="brand-sub">Khalifa University Library</span>
+      </div>
+    </a>
+    <nav class="header-links">
+      <a href="https://library.ku.ac.ae/lib" target="_blank" class="header-link">📚 KU Library</a>
+      <a href="https://khazna.ku.ac.ae"      target="_blank" class="header-link">🏛️ Khazna</a>
+      <a href="https://github.com/ku-library/researchbee" target="_blank" class="header-link">⭐ GitHub</a>
+    </nav>
+  </div>
+  <div class="model-bar">
+    <div class="model-bar-inner">
+      <span class="model-label">AI Model:</span>
+      <div class="model-toggle">
+        <button class="model-btn active" data-model="gpt-4o-mini">gpt-4o-mini</button>
+        <button class="model-btn"        data-model="gpt-4o">gpt-4o</button>
+      </div>
+      <span class="model-hint" id="model-hint">Default · faster · lower cost</span>
+    </div>
+  </div>
+</header>
+
+<!-- ── Hero ────────────────────────────────────────────────────────────── -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">📖 Publishing &amp; Repository Assistant</div>
+    <h1>Find the right journal. <span>Check your rights. Deposit to the right repository.</span></h1>
+    <p class="hero-tagline">For KU researchers, librarians, and repository teams. Journal recommendations, version-specific Green OA policy checks, and research data repository matchmaking — with explicit verification labels.</p>
+    <div class="hero-ku">
+      🏛️ Powered by <a href="https://library.ku.ac.ae/lib" target="_blank">Khalifa University Library</a>
+      &nbsp;·&nbsp; Deposit at <a href="https://khazna.ku.ac.ae" target="_blank">Khazna</a>
+      &nbsp;·&nbsp; <a href="mailto:khazna@ku.ac.ae">khazna@ku.ac.ae</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── Tabs ─────────────────────────────────────────────────────────────── -->
+<div class="tabs-bar">
+  <div class="tabs-inner">
+    <button class="tab-btn active" data-tab="journals">
+      <span class="tab-icon">📰</span> Journal submission
+    </button>
+    <button class="tab-btn" data-tab="license">
+      <span class="tab-icon">🛡</span> License checking
+    </button>
+    <button class="tab-btn" data-tab="data">
+      <span class="tab-icon">🗄</span> Data repository
+    </button>
+  </div>
+</div>
+
+<!-- ── Main ─────────────────────────────────────────────────────────────── -->
+<main class="main-content">
+
+  <!-- ── Tab 1: Journal submission ────────────────────────────────────── -->
+  <div id="tab-journals" class="tab-panel active">
+    <form id="journal-form">
+      <div class="card">
+        <div class="card-header">
+          <h2>📰 Manuscript details</h2>
+          <p>Provide as much detail as you can. Missing fields will be inferred and labelled as assumptions.</p>
+        </div>
+        <div class="card-body">
+          <div class="form-grid form-2col">
+            <div class="form-group form-full">
+              <label for="j-title">Title <span class="req">*</span></label>
+              <input id="j-title" type="text" required placeholder="Full manuscript title">
+            </div>
+            <div class="form-group form-full">
+              <label for="j-abstract">Abstract <span class="req">*</span></label>
+              <textarea id="j-abstract" required rows="6" placeholder="Paste your full abstract here..."></textarea>
+            </div>
+            <div class="form-group">
+              <label for="j-keywords">Keywords (comma-separated)</label>
+              <input id="j-keywords" type="text" placeholder="e.g. machine learning, library, open access">
+            </div>
+            <div class="form-group">
+              <label for="j-discipline">Discipline / sub-discipline</label>
+              <input id="j-discipline" type="text" placeholder="e.g. Library and Information Science">
+            </div>
+            <div class="form-group">
+              <label for="j-article-type">Article type</label>
+              <select id="j-article-type">
+                <option>Original research article</option>
+                <option>Review article</option>
+                <option>Systematic review / meta-analysis</option>
+                <option>Short communication</option>
+                <option>Case study</option>
+                <option>Methods paper</option>
+                <option>Perspective / commentary</option>
+                <option>Letter</option>
+                <option>Conference paper</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="j-methods">Methods (brief)</label>
+              <input id="j-methods" type="text" placeholder="e.g. survey, experiment, case study, RAG pipeline">
+            </div>
+          </div>
+
+          <div class="section-sep">
+            <div class="section-label">Strategy &amp; compliance</div>
+            <div class="form-grid form-2col">
+              <div class="form-group">
+                <label for="j-oa-pref">OA preference</label>
+                <select id="j-oa-pref">
+                  <option>Either</option>
+                  <option>Green OA only</option>
+                  <option>Gold OA only</option>
+                  <option>Diamond / no APC</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="j-apc">APC budget</label>
+                <input id="j-apc" type="text" placeholder="e.g. up to USD 2000, or no APC">
+              </div>
+              <div class="form-group">
+                <label for="j-ranking-pref">Ranking filter</label>
+                <select id="j-ranking-pref">
+                  <option>No filter</option>
+                  <option>Q1</option>
+                  <option>Q2</option>
+                  <option>Q1 or Q2</option>
+                  <option>Top 1%</option>
+                  <option>Top 5%</option>
+                  <option>Top 10%</option>
+                  <option>Top 25%</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="j-ranking-src">Ranking source</label>
+                <select id="j-ranking-src">
+                  <option>Either (label clearly)</option>
+                  <option>Scopus</option>
+                  <option>SCImago</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="j-speed">Publication speed</label>
+                <select id="j-speed">
+                  <option>Standard</option>
+                  <option>Fast turnaround preferred</option>
+                  <option>No preference</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="j-repo-target">Repository target</label>
+                <select id="j-repo-target">
+                  <option>Institutional repository</option>
+                  <option>Subject repository</option>
+                  <option>Both</option>
+                  <option>Not sure</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="j-funder">Funder</label>
+                <input id="j-funder" type="text" placeholder="e.g. ERC, NIH, Wellcome, cOAlition S">
+              </div>
+              <div class="form-group">
+                <label for="j-institution">Institution</label>
+                <input id="j-institution" type="text" placeholder="e.g. Khalifa University">
+              </div>
+              <div class="form-group">
+                <label for="j-country">Country / region</label>
+                <input id="j-country" type="text" placeholder="e.g. UAE">
+              </div>
+              <div class="form-group">
+                <label for="j-audience">Target audience</label>
+                <input id="j-audience" type="text" placeholder="e.g. library practitioners, AI researchers">
+              </div>
+              <div class="form-group form-full">
+                <label for="j-preferred">Preferred journals (optional)</label>
+                <input id="j-preferred" type="text" placeholder="e.g. Nature Communications, PLOS ONE">
+              </div>
+              <div class="form-group form-full">
+                <label for="j-avoid">Journals to avoid (optional)</label>
+                <input id="j-avoid" type="text" placeholder="Journals to exclude from recommendations">
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="margin-top:8px">
+            <span>🔍</span> Find journals &amp; check OA policy
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <div id="journal-progress" class="progress-box"></div>
+    <div id="journal-results" class="hidden"></div>
+  </div>
+
+  <!-- ── Tab 2: License checking ──────────────────────────────────────── -->
+  <div id="tab-license" class="tab-panel">
+    <form id="license-form">
+      <div class="card">
+        <div class="card-header">
+          <h2>🛡 Check journal Green OA / self-archiving policy</h2>
+          <p>Look up version-specific deposit permissions, embargoes, and licence conditions for a known journal.</p>
+        </div>
+        <div class="card-body">
+          <div class="form-grid form-2col">
+            <div class="form-group">
+              <label for="l-journal">Journal name <span class="req">*</span></label>
+              <input id="l-journal" type="text" required placeholder="e.g. Nature Communications">
+            </div>
+            <div class="form-group">
+              <label for="l-issn">ISSN (optional — improves accuracy)</label>
+              <input id="l-issn" type="text" placeholder="e.g. 2041-1723">
+            </div>
+            <div class="form-group">
+              <label for="l-publisher">Publisher (optional)</label>
+              <input id="l-publisher" type="text" placeholder="e.g. Springer Nature">
+            </div>
+            <div class="form-group">
+              <label for="l-version">Manuscript version of interest</label>
+              <select id="l-version">
+                <option>All versions</option>
+                <option>Submitted version / preprint</option>
+                <option>Accepted manuscript (AAM / postprint)</option>
+                <option>Published version (VoR)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="l-funder">Funder (affects rights retention)</label>
+              <input id="l-funder" type="text" placeholder="e.g. cOAlition S, ERC, NIH, Wellcome">
+            </div>
+            <div class="form-group">
+              <label for="l-repo">Intended deposit location</label>
+              <select id="l-repo">
+                <option>Institutional repository</option>
+                <option>Subject repository (e.g. arXiv, PMC, SSRN)</option>
+                <option>Personal website</option>
+                <option>ResearchGate / Academia.edu</option>
+                <option>Preprint server</option>
+                <option>Both institutional &amp; subject</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="l-licence">Intended licence</label>
+              <select id="l-licence">
+                <option>CC BY</option>
+                <option>CC BY-NC</option>
+                <option>CC BY-NC-ND</option>
+                <option>CC BY-SA</option>
+                <option>CC0</option>
+                <option>Publisher's bespoke licence</option>
+                <option>Not sure</option>
+              </select>
+            </div>
+            <div class="form-group form-full">
+              <label for="l-notes">Additional context (optional)</label>
+              <textarea id="l-notes" rows="3" placeholder="Already accepted? Already published? Embargo concerns? Funder mandate deadlines?"></textarea>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" style="margin-top:8px">
+            🛡 Check Green OA policy
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <div id="license-progress" class="progress-box"></div>
+    <div id="license-results" class="hidden"></div>
+  </div>
+
+  <!-- ── Tab 3: Data repository ───────────────────────────────────────── -->
+  <div id="tab-data" class="tab-panel">
+    <form id="repo-form">
+      <div class="card">
+        <div class="card-header">
+          <h2>🗄 Find a research data repository</h2>
+          <p>Describe your dataset. We'll match it to domain-specific and generalist repositories (re3data, FAIRsharing, OpenAIRE) and Khazna — the KU institutional repository.</p>
+        </div>
+        <div class="card-body">
+          <div class="form-grid form-2col">
+            <div class="form-group form-full">
+              <label for="r-title">Dataset title <span class="req">*</span></label>
+              <input id="r-title" type="text" required placeholder="Descriptive title for your dataset">
+            </div>
+            <div class="form-group form-full">
+              <label for="r-desc">Description <span class="req">*</span></label>
+              <textarea id="r-desc" required rows="4" placeholder="What does the dataset contain, how was it collected, and what is its intended reuse?"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="r-discipline">Discipline / domain <span class="req">*</span></label>
+              <input id="r-discipline" type="text" required placeholder="e.g. genomics, climate science, engineering">
+            </div>
+            <div class="form-group">
+              <label for="r-datatypes">Data types <span class="req">*</span></label>
+              <input id="r-datatypes" type="text" required placeholder="e.g. tabular, images, sequencing reads, time series">
+            </div>
+            <div class="form-group">
+              <label for="r-formats">File formats</label>
+              <input id="r-formats" type="text" placeholder="e.g. CSV, FASTQ, NetCDF, TIFF, HDF5">
+            </div>
+            <div class="form-group">
+              <label for="r-size">Approximate total size</label>
+              <input id="r-size" type="text" placeholder="e.g. 250 MB / 5 GB / 2 TB">
+            </div>
+          </div>
+
+          <div class="section-sep">
+            <div class="section-label">Sensitivity &amp; access</div>
+            <div class="form-grid form-2col">
+              <div class="form-group">
+                <label for="r-sensitivity">Sensitivity classification</label>
+                <select id="r-sensitivity">
+                  <option>Open</option>
+                  <option>Restricted</option>
+                  <option>Sensitive</option>
+                  <option>Mixed</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="r-personal">Contains personal / health data?</label>
+                <select id="r-personal">
+                  <option>No</option>
+                  <option>Yes — anonymised</option>
+                  <option>Yes — pseudonymised</option>
+                  <option>Yes — identifiable</option>
+                  <option>Unsure</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="r-licence">Intended licence</label>
+                <select id="r-licence">
+                  <option>CC BY</option>
+                  <option>CC0</option>
+                  <option>CC BY-NC</option>
+                  <option>CC BY-SA</option>
+                  <option>CC BY-NC-SA</option>
+                  <option>Restricted / custom</option>
+                  <option>Not sure</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="r-embargo">Embargo required?</label>
+                <select id="r-embargo">
+                  <option>No</option>
+                  <option>Yes — short (≤6 months)</option>
+                  <option>Yes — long (&gt;6 months)</option>
+                  <option>Unsure</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="r-doi">Persistent identifier (DOI) required?</label>
+                <select id="r-doi">
+                  <option>Yes</option>
+                  <option>No</option>
+                  <option>Unsure</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="r-versioning">Versioning required?</label>
+                <select id="r-versioning">
+                  <option>Yes</option>
+                  <option>No</option>
+                  <option>Unsure</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-sep">
+            <div class="section-label">Context</div>
+            <div class="form-grid form-2col">
+              <div class="form-group">
+                <label for="r-funder">Funder</label>
+                <input id="r-funder" type="text" placeholder="e.g. Horizon Europe, NIH, ERC, ADEK">
+              </div>
+              <div class="form-group">
+                <label for="r-institution">Institution</label>
+                <input id="r-institution" type="text" placeholder="e.g. Khalifa University">
+              </div>
+              <div class="form-group">
+                <label for="r-country">Country / region</label>
+                <input id="r-country" type="text" placeholder="e.g. UAE">
+              </div>
+              <div class="form-group">
+                <label for="r-preferred">Preferred / required repository (optional)</label>
+                <input id="r-preferred" type="text" placeholder="e.g. Zenodo, GenBank">
+              </div>
+              <div class="form-group form-full">
+                <label for="r-publication">Linked publication / DOI (optional)</label>
+                <input id="r-publication" type="text" placeholder="Related article DOI or title">
+              </div>
+              <div class="form-group form-full">
+                <label for="r-notes">Additional notes</label>
+                <textarea id="r-notes" rows="3" placeholder="Any special requirements, funder mandates, or context..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="margin-top:8px">
+            🗄 Find best repositories
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <div id="repo-progress" class="progress-box"></div>
+    <div id="repo-results" class="hidden"></div>
+  </div>
+
+</main>
+
+<!-- ── Footer ───────────────────────────────────────────────────────────── -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <p>
+      Ranking metrics sourced from journal data (2025). Always verify policies on
+      <a href="https://openpolicyfinder.jisc.ac.uk" target="_blank">Open Policy Finder</a> and
+      repositories on <a href="https://www.re3data.org" target="_blank">re3data</a> before deposit.
+    </p>
+    <p>
+      <a href="https://library.ku.ac.ae/lib" target="_blank">KU Library</a> ·
+      <a href="https://khazna.ku.ac.ae" target="_blank">Khazna Repository</a> ·
+      <a href="https://github.com/ku-library/researchbee" target="_blank">GitHub</a>
+    </p>
+  </div>
+</footer>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
