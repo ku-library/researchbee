@@ -6,15 +6,15 @@
   <title>Research Navigator — Khalifa University Library</title>
   <meta name="description" content="Find the right journal. Check your rights. Deposit to the right repository. AI-powered publishing and repository assistant for KU researchers.">
   <link rel="stylesheet" href="css/style.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐝</text></svg>">
+  <link rel="icon" href="assets/researchbeemascot.png">
 </head>
 <body>
 
-<!-- ── Header ──────────────────────────────────────────────────────────── -->
+<!-- Header -->
 <header class="site-header">
   <div class="header-inner">
     <a href="/" class="brand">
-      <span class="brand-bee">🐝</span>
+      <img src="assets/researchbeemascot.png" class="brand-mascot" alt="ResearchBee mascot">
       <div>
         <span class="brand-name">Research Navigator</span>
         <span class="brand-sub">Khalifa University Library</span>
@@ -23,7 +23,6 @@
     <nav class="header-links">
       <a href="https://library.ku.ac.ae/lib" target="_blank" class="header-link">📚 KU Library</a>
       <a href="https://khazna.ku.ac.ae"      target="_blank" class="header-link">🏛️ Khazna</a>
-      
     </nav>
   </div>
   <div class="model-bar">
@@ -38,16 +37,16 @@
   </div>
 </header>
 
-<!-- ── Welcome hero (LibBee style) ──────────────────────────────────────── -->
+<!-- Welcome hero -->
 <div class="lb-welcome">
   <div class="lb-mascot">
-    <div class="lb-bee">🐝</div>
+    <img src="assets/researchbeemascot.png" class="lb-mascot-img" alt="ResearchBee">
     <h1 class="lb-title">Research Navigator</h1>
     <p class="lb-sub">Your KU publishing assistant — find the right journal, check self-archiving rights, and deposit to the right repository.</p>
   </div>
 </div>
 
-<!-- ── Tabs ─────────────────────────────────────────────────────────────── -->
+<!-- Tabs -->
 <div class="tabs-bar">
   <div class="tabs-inner">
     <button class="tab-btn active" data-tab="journals">
@@ -62,13 +61,12 @@
   </div>
 </div>
 
-<!-- ── Main ─────────────────────────────────────────────────────────────── -->
+<!-- Main -->
 <main class="main-content">
 
-  <!-- ── Tab 1: Journal submission ────────────────────────────────────── -->
+  <!-- Tab 1: Journal submission -->
   <div id="tab-journals" class="tab-panel active">
 
-    <!-- Mode selector -->
     <div class="mode-selector">
       <button class="mode-btn active" data-mode="subject" onclick="switchMode('subject')">
         <span class="mode-icon">📊</span>
@@ -114,7 +112,7 @@
       <div id="subject-results" class="hidden"></div>
     </div>
 
-    <!-- Manuscript analyse mode (existing - hidden by default) -->
+    <!-- Manuscript analyse mode -->
     <div id="mode-manuscript" style="display:none">
     <form id="journal-form">
       <div class="card">
@@ -253,7 +251,7 @@
     </div><!-- /mode-manuscript -->
   </div><!-- /tab-journals -->
 
-  <!-- ── Tab 2: License checking ──────────────────────────────────────── -->
+  <!-- Tab 2: License checking -->
   <div id="tab-license" class="tab-panel">
     <form id="license-form">
       <div class="card">
@@ -327,7 +325,7 @@
     <div id="license-results" class="hidden"></div>
   </div>
 
-  <!-- ── Tab 3: Data repository ───────────────────────────────────────── -->
+  <!-- Tab 3: Data repository -->
   <div id="tab-data" class="tab-panel">
     <form id="repo-form">
       <div class="card">
@@ -401,8 +399,8 @@
                 <label for="r-embargo">Embargo required?</label>
                 <select id="r-embargo">
                   <option>No</option>
-                  <option>Yes — short (≤6 months)</option>
-                  <option>Yes — long (&gt;6 months)</option>
+                  <option>Yes — short (6 months)</option>
+                  <option>Yes — long (6 months)</option>
                   <option>Unsure</option>
                 </select>
               </div>
@@ -468,7 +466,7 @@
 
 </main>
 
-<!-- ── Footer ───────────────────────────────────────────────────────────── -->
+<!-- Footer -->
 <footer class="site-footer">
   <div class="footer-inner">
     <p>
