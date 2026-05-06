@@ -627,3 +627,35 @@ textarea { resize: vertical; min-height: 90px; }
   font-size: 12px; color: var(--text-muted);
   display: flex; align-items: center; gap: 6px;
 }
+
+/* ── Mascot image ───────────────────────────────────────────────────────── */
+
+/* Header */
+.brand-mascot {
+  width: 38px; height: 38px; border-radius: 50%;
+  object-fit: cover; flex-shrink: 0;
+  border: 2px solid rgba(255,255,255,0.3);
+}
+
+/* Hero */
+.lb-mascot-img {
+  width: 80px; height: 80px; border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #e5e7eb;
+  box-shadow: 0 4px 16px rgba(0,0,0,.10);
+}
+
+/* Results response mascot */
+.results-mascot-row {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+}
+.results-mascot-img {
+  width: 44px; height: 44px; border-radius: 50%;
+  object-fit: cover; border: 2px solid var(--primary-light);
+  flex-shrink: 0;
+}
+.results-mascot-bubble {
+  background: var(--primary-xlight); border: 1px solid var(--primary-light);
+  border-radius: 0 12px 12px 12px; padding: 8px 14px;
+  font-size: 13px; color: var(--primary); font-weight: 500;
+}
