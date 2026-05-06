@@ -1,5 +1,15 @@
 // render.js - shared rendering helpers
 
+const MASCOT = "assets/researchbeemascot.png";
+
+export function renderMascotRow(message) {
+  return `
+    <div class="results-mascot-row">
+      <img src="${MASCOT}" class="results-mascot-img" alt="ResearchBee">
+      <div class="results-mascot-bubble">${message}</div>
+    </div>`;
+}
+
 export function esc(str) {
   if (!str) return "";
   return String(str)

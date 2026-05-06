@@ -3,7 +3,7 @@ import { callAPI, getModel } from "./api.js";
 import { showProgress, setStep, doneProgress } from "./app.js";
 import {
   esc, renderRepoCard, renderKhaznaCard,
-  renderHelpCard, renderNextActions
+  renderHelpCard, renderNextActions, renderMascotRow
 } from "./render.js";
 
 export function repositoryTab() {
@@ -130,6 +130,7 @@ function renderDepositStrategy(s) {
 function renderRepoResults(result, container) {
   const repos = result.repositories || [];
   container.innerHTML = `
+    ${renderMascotRow('Here are the best repositories for your dataset.')}
     <div class="results-header">
       <h2 class="results-title">Recommended repositories</h2>
       <div class="results-meta">

@@ -3,7 +3,7 @@ import { callAPI, getModel } from "./api.js";
 import { showProgress, setStep, doneProgress } from "./app.js";
 import {
   esc, oaStatusBadge, renderVersionBlock, renderVerifyLinks,
-  renderKhaznaCard, renderHelpCard, renderNextActions
+  renderKhaznaCard, renderHelpCard, renderNextActions, renderMascotRow
 } from "./render.js";
 
 export function licenseTab() {
@@ -123,6 +123,7 @@ function renderDepositRecommendation(r) {
 function renderLicenseResults(result, container) {
   const journals = result.journals || [];
   container.innerHTML = `
+    ${renderMascotRow('Here is the self-archiving policy for your journal.')}
     <div class="results-header">
       <h2 class="results-title">Policy result</h2>
       <div class="results-meta">

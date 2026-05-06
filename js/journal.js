@@ -5,7 +5,7 @@ import {
   esc, quartileBadge, confidenceBadge, oaStatusBadge,
   renderVersionBlock, renderVerifyLinks, renderOpenAlexMetrics,
   renderRankingBlock, renderKhaznaCard, renderHelpCard,
-  renderNextActions, renderManuscriptUnderstanding
+  renderNextActions, renderManuscriptUnderstanding, renderMascotRow
 } from "./render.js";
 
 export function journalTab() {
@@ -199,6 +199,7 @@ function renderJournalResults(result, container) {
   const total    = journals.length + extended.length;
 
   container.innerHTML = `
+    ${renderMascotRow('Here are your journal recommendations with full Green OA policy breakdown.')}
     <div class="results-header">
       <h2 class="results-title">Analysis</h2>
       <div class="results-meta">
@@ -348,6 +349,7 @@ function renderSubjectResults(result, container) {
   }).join("");
 
   container.innerHTML = `
+    ${renderMascotRow('Here are the top journals for ' + esc(result.normalised) + '.')}
     <div class="results-header">
       <h2 class="results-title">Top journals: ${esc(result.normalised)}</h2>
       <div class="results-meta">
