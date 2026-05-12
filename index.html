@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Research Navigator — Khalifa University Library</title>
+  <title>ResearchBee — Khalifa University Library</title>
   <meta name="description" content="Find the right journal. Check your rights. Deposit to the right repository. AI-powered publishing and repository assistant for KU researchers.">
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="assets/researchbeemascot.png">
@@ -16,7 +16,7 @@
     <a href="/" class="brand">
       <img src="assets/researchbeemascot.png" class="brand-mascot" alt="ResearchBee mascot">
       <div>
-        <span class="brand-name">Research Navigator</span>
+        <span class="brand-name">ResearchBee</span>
         <span class="brand-sub">Khalifa University Library</span>
       </div>
     </a>
@@ -46,8 +46,8 @@
 <div class="lb-welcome">
   <div class="lb-mascot">
     <img src="assets/researchbeemascot.png" class="lb-mascot-img" alt="ResearchBee">
-    <h1 class="lb-title">Research Navigator</h1>
-    <p class="lb-sub">Your KU publishing assistant — find the right journal, check self-archiving rights, and deposit to the right repository.</p>
+    <h1 class="lb-title">ResearchBee</h1>
+    <p class="lb-sub">Khalifa University Library's AI publishing assistant — find the right journal, check self-archiving rights, and deposit to the right repository.</p>
   </div>
 </div>
 
@@ -55,13 +55,25 @@
 <div class="tabs-bar">
   <div class="tabs-inner">
     <button class="tab-btn active" data-tab="journals">
-      <span class="tab-icon">📰</span> Journal submission
+      <span class="tab-icon-wrap tab-icon-journal">📰</span>
+      <span class="tab-label-wrap">
+        <span class="tab-label-main">Journal submission</span>
+        <span class="tab-label-sub">Find &amp; rank journals</span>
+      </span>
     </button>
     <button class="tab-btn" data-tab="license">
-      <span class="tab-icon">🛡</span> License checking
+      <span class="tab-icon-wrap tab-icon-license">🛡</span>
+      <span class="tab-label-wrap">
+        <span class="tab-label-main">License checking</span>
+        <span class="tab-label-sub">Self-archiving rights</span>
+      </span>
     </button>
     <button class="tab-btn" data-tab="data">
-      <span class="tab-icon">🗄</span> Data repository
+      <span class="tab-icon-wrap tab-icon-data">🗄</span>
+      <span class="tab-label-wrap">
+        <span class="tab-label-main">Data repository</span>
+        <span class="tab-label-sub">Find the right repo</span>
+      </span>
     </button>
   </div>
 </div>
@@ -74,17 +86,19 @@
 
     <div class="mode-selector">
       <button class="mode-btn active" data-mode="subject" onclick="switchMode('subject')">
-        <span class="mode-icon">📊</span>
+        <div class="mode-icon-wrap mode-icon-subject">📊</div>
         <div class="mode-text">
           <span class="mode-title">Browse by subject</span>
-          <span class="mode-desc">Find top journals by discipline</span>
+          <span class="mode-desc">Type a discipline — get top 15 ranked journals instantly from 53K+ indexed titles</span>
+          <span class="mode-tag">Instant · No manuscript needed</span>
         </div>
       </button>
       <button class="mode-btn" data-mode="manuscript" onclick="switchMode('manuscript')">
-        <span class="mode-icon">📝</span>
+        <div class="mode-icon-wrap mode-icon-manuscript">📝</div>
         <div class="mode-text">
           <span class="mode-title">Analyse manuscript</span>
-          <span class="mode-desc">Get personalised recommendations</span>
+          <span class="mode-desc">Paste your abstract for AI-powered journal matching with full Green OA policy breakdown</span>
+          <span class="mode-tag">AI-powered · Personalised · 15 journals</span>
         </div>
       </button>
     </div>
