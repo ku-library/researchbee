@@ -1,464 +1,314 @@
-// journal.js - Journal submission tab
-import { callAPI, getModel, getLanguage } from "./api.js";
-import { showProgress, setStep, doneProgress } from "./app.js";
-import {
-  esc, quartileBadge, confidenceBadge, oaStatusBadge,
-  renderVersionBlock, renderVerifyLinks, renderOpenAlexMetrics,
-  renderRankingBlock, renderKhaznaCard, renderHelpCard,
-  renderNextActions, renderManuscriptUnderstanding, renderMascotRow,
-  renderSubmissionChecklist, renderCoverLetterBtn
-} from "./render.js";
+// render.js - shared rendering helpers
 
-export function journalTab() {
-  const form    = document.getElementById("journal-form");
-  const results = document.getElementById("journal-results");
-  const resetBtn= document.getElementById("journal-reset");
-  if (!form) return;
+const MASCOT = "assets/researchbeemascot.png";
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const submitBtn = form.querySelector(".btn-primary");
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = `<span class="btn-spinner"></span> Analysing...`;
-    results.innerHTML = "";
-    results.classList.remove("hidden");
-
-    showProgress("journal-progress", [
-      "Analysing your manuscript...",
-      "Matching journals to your criteria...",
-      "Enriching with journal metrics...",
-      "Building results..."
-    ]);
-
-    try {
-      const manuscript = getManuscriptData();
-      window._lastManuscript = manuscript;
-      setStep("journal-progress", 1);
-      const data = await callAPI("/api/analyze-journal", { manuscript, model: getModel(), language: getLanguage() });
-      setStep("journal-progress", 2);
-      await new Promise(r => setTimeout(r, 300));
-      setStep("journal-progress", 3);
-      const result = data.result;
-      const total = (result.journals?.length || 0) + (result.extended_list?.length || 0);
-      doneProgress("journal-progress", `[OK] ${total} journals found - ${result.journals?.length || 0} detailed . ${result.extended_list?.length || 0} quick matches`);
-      setTimeout(() => renderJournalResults(result, results), 400);
-    } catch (err) {
-      document.getElementById("journal-progress").innerHTML =
-        `<div class="p-step" style="color:var(--danger)"><span class="p-dot" style="background:var(--danger)"></span><span>Error: ${esc(err.message)}</span></div>`;
-    } finally {
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = `<span></span> Find journals & check OA policy`;
-    }
-  });
-
-  resetBtn?.addEventListener("click", () => {
-    results.innerHTML = "";
-    results.classList.add("hidden");
-    document.getElementById("journal-progress")?.classList.remove("show");
-    form.reset();
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  });
-}
-
-function getManuscriptData() {
-  const g = (id) => document.getElementById(id)?.value?.trim() || "";
-  return {
-    title:               g("j-title"),
-    abstract:            g("j-abstract"),
-    keywords:            g("j-keywords"),
-    discipline:          g("j-discipline"),
-    article_type:        g("j-article-type"),
-    methods:             g("j-methods"),
-    audience:            g("j-audience"),
-    funder:              g("j-funder"),
-    institution:         g("j-institution"),
-    country:             g("j-country"),
-    apc_budget:          g("j-apc"),
-    oa_preference:       g("j-oa-pref"),
-    ranking_preference:  g("j-ranking-pref"),
-    ranking_source:      g("j-ranking-src"),
-    speed_preference:    g("j-speed"),
-    preferred_journals:  g("j-preferred"),
-    avoid_journals:      g("j-avoid"),
-    repository_target:   g("j-repo-target"),
-  };
-}
-
-function renderJournalCard(j, idx) {
-  const oa = j.green_oa || {};
-  const policyNotes = [
-    oa.licence_notes         ? `<p><strong>Licence notes:</strong> ${esc(oa.licence_notes)}</p>` : "",
-    oa.repository_action_note? `<p><strong>Repository action:</strong> ${esc(oa.repository_action_note)}</p>` : "",
-    oa.evidence_note         ? `<p style="font-style:italic;font-size:12px;color:var(--text-muted)">Evidence: ${esc(oa.evidence_note)}</p>` : "",
-    oa.risk_flag             ? `<p class="p-risk">[!] <span><strong>Risk:</strong> ${esc(oa.risk_flag)}</span></p>` : "",
-  ].filter(Boolean).join("");
-
+export function renderMascotRow(message) {
   return `
-    <div class="card j-card">
+    <div class="results-mascot-row">
+      <img src="${MASCOT}" class="results-mascot-img" alt="ResearchBee">
+      <div class="results-mascot-bubble">${message}</div>
+    </div>`;
+}
+
+export function esc(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+export function quartileBadge(q) {
+  if (!q || q === "-") return "";
+  const cls = { Q1: "b-q1", Q2: "b-q2", Q3: "b-q3", Q4: "b-q4" }[q] || "b-muted";
+  return `<span class="badge ${cls}">${esc(q)}</span>`;
+}
+
+export function confidenceBadge(c) {
+  const cls = { High: "b-success", Medium: "b-warning", Low: "b-muted" }[c] || "b-muted";
+  return `<span class="badge ${cls}">Fit: ${esc(c)}</span>`;
+}
+
+export function oaStatusBadge(s) {
+  const cls = s === "Confirmed" ? "b-success"
+    : s === "Partially confirmed" ? "b-warning" : "b-danger";
+  return `<span class="badge ${cls}">OA: ${esc(s)}</span>`;
+}
+
+export function accessBadge(a) {
+  const cls = a === "Open" ? "b-success" : a === "Controlled" ? "b-danger" : "b-warning";
+  return `<span class="badge ${cls}">${esc(a)}</span>`;
+}
+
+export function fairBadge(f) {
+  const cls = f === "High" ? "b-success" : f === "Medium" ? "b-warning" : "b-muted";
+  return `<span class="badge ${cls}">FAIR: ${esc(f)}</span>`;
+}
+
+export function allowedClass(a) {
+  return a === "Yes" ? "v-yes" : a === "No" ? "v-no" : "v-unclear";
+}
+
+export function renderVersionBlock(title, v) {
+  if (!v) return "";
+  return `
+    <div class="version-card">
+      <div class="v-head">
+        <span class="v-title">${esc(title)}</span>
+        <span class="v-allowed ${allowedClass(v.allowed)}">${esc(v.allowed || "Unclear")}</span>
+      </div>
+      <dl class="v-grid">
+        ${v.where    ? `<div><dt>Where</dt><dd>${esc(v.where)}</dd></div>` : ""}
+        ${v.embargo  ? `<div><dt>Embargo</dt><dd>${esc(v.embargo)}</dd></div>` : ""}
+        ${v.licence  ? `<div><dt>Licence</dt><dd>${esc(v.licence)}</dd></div>` : ""}
+        ${v.conditions ? `<div class="v-full"><dt>Conditions</dt><dd>${esc(v.conditions)}</dd></div>` : ""}
+      </dl>
+    </div>`;
+}
+
+export function renderVerifyLinks(vl, showScopusPrimary = true) {
+  if (!vl) return "";
+  return `
+    <div class="verify-row">
+      <span class="verify-lbl">Verify on:</span>
+      ${showScopusPrimary && vl.scopus ? `<a href="${esc(vl.scopus)}" target="_blank" class="vlink vlink-scopus"> Scopus </a>` : ""}
+      ${vl.sherpa_romeo ? `<a href="${esc(vl.sherpa_romeo)}" target="_blank" class="vlink">SHERPA </a>` : ""}
+      ${!showScopusPrimary && vl.scopus ? `<a href="${esc(vl.scopus)}" target="_blank" class="vlink">Scopus </a>` : ""}
+      ${vl.doaj       ? `<a href="${esc(vl.doaj)}" target="_blank" class="vlink">DOAJ </a>` : ""}
+      ${vl.openalex   ? `<a href="${esc(vl.openalex)}" target="_blank" class="vlink">OpenAlex </a>` : ""}
+    </div>`;
+}
+
+export function renderOpenAlexMetrics(oa) {
+  if (!oa) return "";
+  const fmt = (n) => n != null ? Number(n).toLocaleString() : "-";
+  const tags = [oa.is_in_doaj ? ". DOAJ-listed" : "", oa.is_oa ? ". OA journal" : ""].filter(Boolean).join(" ");
+  return `
+    <dl class="oa-metrics">
+      <div class="oa-m"><dt>Works</dt><dd>${fmt(oa.works_count)}</dd></div>
+      <div class="oa-m"><dt>Citations</dt><dd>${fmt(oa.cited_by_count)}</dd></div>
+      <div class="oa-m"><dt>h-index</dt><dd>${fmt(oa.h_index)}</dd></div>
+      <div class="oa-m"><dt>2-yr citedness</dt><dd>${oa.two_yr_mean_citedness != null ? Number(oa.two_yr_mean_citedness).toFixed(2) : "-"}</dd></div>
+      <div class="oa-src">Source: OpenAlex ${tags}</div>
+    </dl>`;
+}
+
+export function renderRankingBlock(r) {
+  if (!r) return "";
+  const isConfirmed  = r.verification_status === "Confirmed";
+  const isDerived    = /openalex-derived/i.test(r.verification_status || "");
+  const isUnverified = !isConfirmed && !isDerived;
+  const cls = isConfirmed ? "confirmed" : isDerived ? "derived" : "unverified";
+  const badge = isConfirmed
+    ? `<span class="badge b-success">✓ Verified by ISSN</span>`
+    : isDerived
+    ? `<span class="badge b-warning">[!] OpenAlex-derived</span>`
+    : `<span class="badge b-danger">[!] Unverified - check manually</span>`;
+  return `
+    <div class="rank-box ${cls}">
+      <div class="rank-head">
+        <h5> Journal metrics</h5>
+        ${badge}
+      </div>
+      <dl class="rank-grid">
+        <div class="rank-item"><dt>Source</dt><dd>${esc(r.source || "-")}</dd></div>
+        <div class="rank-item"><dt>Year</dt><dd>${esc(r.year || "-")}</dd></div>
+        <div class="rank-item"><dt>Quartile</dt><dd>${r.quartile ? `<span class="badge ${["b-q1","b-q2","b-q3","b-q4"][["Q1","Q2","Q3","Q4"].indexOf(r.quartile)] || "b-muted"}">${esc(r.quartile)}</span>` : "-"}</dd></div>
+        ${r.percentile ? `<div class="rank-item"><dt>Rank/Percentile</dt><dd>${esc(r.percentile)}</dd></div>` : ""}
+        ${r.category   ? `<div class="rank-item"><dt>Category</dt><dd style="font-size:11px">${esc(r.category)}</dd></div>` : ""}
+        ${r.h_index    ? `<div class="rank-item"><dt>h-index</dt><dd>${esc(r.h_index)}</dd></div>` : ""}
+      </dl>
+      ${r.interpretation ? `<p class="rank-note">${esc(r.interpretation)}</p>` : ""}
+      ${r.verification_status ? `<p class="rank-verify"><strong>Verification:</strong> ${esc(r.verification_status)}</p>` : ""}
+    </div>`;
+}
+
+export function renderKhaznaCard(k, mode = "article") {
+  const tip = mode === "data"
+    ? "Even if depositing data in a domain-specific repository, always register metadata in Khazna so your work appears in KU's research portfolio."
+    : "Deposit your accepted manuscript (or metadata record if under embargo) to Khazna for KU institutional visibility and compliance.";
+  return `
+    <div class="khazna-card">
+      <div class="khazna-head">
+        <span style="font-size:22px">️</span>
+        <div>
+          <h3>Khazna - KU Institutional Repository</h3>
+          <div style="font-size:12px;opacity:.8">khazna.ku.ac.ae</div>
+        </div>
+      </div>
+      <div class="khazna-body">
+        <p>${esc(k.message || tip)}</p>
+        <div class="khazna-tip">
+          <span>💡</span>
+          <span>${esc(tip)}</span>
+        </div>
+        <div class="khazna-actions">
+          <a href="${esc(k.url || "https://khazna.ku.ac.ae")}" target="_blank" class="k-btn k-btn-fill">🔗 Visit Khazna</a>
+          <a href="mailto:${esc(k.contact || "khazna@ku.ac.ae")}" class="k-btn k-btn-outline">✉ khazna@ku.ac.ae</a>
+          <a href="${esc(k.library_url || "https://library.ku.ac.ae/lib")}" target="_blank" class="k-btn k-btn-outline"> KU Library</a>
+        </div>
+      </div>
+    </div>`;
+}
+
+export function renderHelpCard() {
+  return `
+    <div class="help-card">
+      <div class="help-left">
+        <span class="help-icon"></span>
+        <div class="help-text">
+          <h4>Need help? Contact KU Library</h4>
+          <p>Not sure what to deposit, which version, or how? Our librarians can advise on open access, self-archiving, and research data management.</p>
+        </div>
+      </div>
+      <div class="help-links">
+        <a href="mailto:library@ku.ac.ae" class="k-btn k-btn-fill" style="font-size:12px;padding:7px 14px">✉ Contact Library</a>
+        <a href="https://library.ku.ac.ae/lib" target="_blank" class="k-btn k-btn-outline" style="font-size:12px;padding:7px 14px">🔗 Library Website</a>
+      </div>
+    </div>`;
+}
+
+export function renderRepoCard(r, idx) {
+  const isKhazna = r.is_khazna;
+  const vl = r.verify_links || {};
+  return `
+    <div class="card j-card r-card ${isKhazna ? "is-khazna" : ""}">
       <div class="j-header">
-        <div class="j-meta">#${idx + 1} . ${esc(j.publisher || "")}${j.issn ? ` . ISSN ${esc(j.issn)}` : ""}</div>
-        <div class="j-title">${esc(j.name)}</div>
+        <div class="j-meta">#${idx + 1} . ${esc(r.type)} . ${esc(r.cost)}${isKhazna ? " . KU Institutional" : ""}</div>
+        <div class="j-title">
+          ${esc(r.name)}
+          ${r.url ? `<a href="${esc(r.url)}" target="_blank" style="font-size:14px;font-family:'DM Sans',sans-serif;font-weight:400;color:var(--primary);margin-left:8px"> visit</a>` : ""}
+        </div>
         <div class="badge-row">
-          ${confidenceBadge(j.confidence)}
-          ${j.ranking?.quartile ? quartileBadge(j.ranking.quartile) : ""}
-          ${oaStatusBadge(oa.policy_status || "Not confirmed")}
+          ${confidenceBadge(r.confidence)}
+          ${accessBadge(r.access_model)}
+          ${fairBadge(r.fair_alignment)}
+          ${r.certification && r.certification !== "None" ? `<span class="badge b-accent">${esc(r.certification)}</span>` : ""}
         </div>
       </div>
       <div class="j-body">
+        <p class="text-sm" style="color:var(--text-muted)">${esc(r.scope)}</p>
         <div class="detail-grid">
-          <div class="detail-item"><h5>🎯 Why it fits</h5><p>${esc(j.fit_reason)}</p></div>
-          <div class="detail-item"><h5>👥 Audience match</h5><p>${esc(j.audience_match)}</p></div>
-          <div class="detail-item"><h5> Submission strategy</h5><p>${esc(j.submission_strategy)}</p></div>
-          <div class="detail-item"><h5>🔓 OA / compliance</h5><p>${esc(j.oa_compliance_note)}</p></div>
+          <div class="detail-item"><h5>Why it fits</h5><p>${esc(r.fit_reason)}</p></div>
+          <div class="detail-item"><h5>Data types</h5><p>${esc(r.data_types_accepted)}</p></div>
         </div>
-
-        ${renderRankingBlock(j.ranking)}
-
         <hr class="divider">
-
-        <div>
-          <h5 style="font-size:14px;font-weight:600;margin-bottom:10px"> Green OA / self-archiving by version</h5>
-          <div class="version-list">
-            ${renderVersionBlock("Submitted version / preprint", oa.preprint)}
-            ${renderVersionBlock("Accepted manuscript (AAM / postprint)", oa.postprint)}
-            ${renderVersionBlock("Published version (Version of Record)", oa.published_version)}
-          </div>
-        </div>
-
-        ${policyNotes ? `<div class="policy-notes">${policyNotes}</div>` : ""}
-        ${renderSubmissionChecklist(j.submission_checklist)}
-        ${renderCoverLetterBtn(j, window._lastManuscript)}
-        ${renderOpenAlexMetrics(j.openalex)}
-        ${renderVerifyLinks(j.verify_links)}
-      </div>
-    </div>`;
-}
-
-function renderExtendedList(list) {
-  if (!list?.length) return "";
-  const rows = list.map((j, i) => {
-    const vl = j.verify_links || {};
-    const q  = j.quartile;
-    return `
-      <tr>
-        <td>${i + 6}</td>
-        <td><strong>${esc(j.name)}</strong><br><span style="font-size:12px;color:var(--text-muted)">${esc(j.publisher || "")}</span></td>
-        <td style="font-family:'JetBrains Mono',monospace;font-size:12px">${esc(j.issn || "-")}</td>
-        <td>${q ? quartileBadge(q) : '<span style="color:var(--text-light);font-size:12px">-</span>'}</td>
-        <td style="font-size:12px;color:var(--text-muted)">${esc(j.fit_reason || "")}</td>
-        <td>
-          <div class="ext-links">
-            ${vl.scopus  ? `<a href="${esc(vl.scopus)}"       target="_blank" class="el el-scopus"> Scopus </a>` : ""}
-            ${vl.sherpa_romeo ? `<a href="${esc(vl.sherpa_romeo)}" target="_blank" class="el el-sherpa">SHERPA </a>` : ""}
-          </div>
-        </td>
-      </tr>`;
-  }).join("");
-
-  return `
-    <div class="extended-wrap">
-      <button class="ext-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('show')">
-        <span> Show ${list.length} more journal suggestions</span>
-        <span class="ext-arrow">▼</span>
-      </button>
-      <div class="ext-body">
-        <table class="ext-table">
-          <thead>
-            <tr>
-              <th>#</th><th>Journal</th><th>ISSN</th><th>Quartile</th><th>Why it fits</th><th>Verify</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
-    </div>`;
-}
-
-function renderRepoRecommendation(r) {
-  if (!r) return "";
-  return `
-    <div class="card rec-card mt-6">
-      <div class="card-header"><h2> Repository manager recommendation</h2></div>
-      <div class="card-body space-y">
-        <dl class="rec-grid">
-          <div class="rec-item"><dt>Best version to deposit</dt><dd>${esc(r.best_version_to_deposit)}</dd></div>
-          <div class="rec-item"><dt>Best timing</dt><dd>${esc(r.best_timing)}</dd></div>
-          <div class="rec-item"><dt>Immediate open deposit</dt><dd>${esc(r.immediate_open_deposit_possible)}</dd></div>
-          <div class="rec-item"><dt>Embargoed deposit needed</dt><dd>${esc(r.embargoed_deposit_needed)}</dd></div>
-          <div class="rec-item"><dt>Metadata-only first</dt><dd>${esc(r.metadata_only_first)}</dd></div>
+        <dl class="r-specs">
+          <div><dt>Max file size</dt><dd>${esc(r.max_file_size)}</dd></div>
+          <div><dt>Licences</dt><dd>${esc(r.licences_supported)}</dd></div>
+          <div><dt>Persistent ID</dt><dd>${esc(r.persistent_identifier)}</dd></div>
+          <div><dt>Versioning</dt><dd>${esc(r.versioning)}</dd></div>
+          <div><dt>Embargo support</dt><dd>${esc(r.embargo_support)}</dd></div>
+          <div><dt>Sensitive data</dt><dd>${esc(r.sensitive_data_suitable)}</dd></div>
         </dl>
-        ${r.khazna_note ? `<div class="policy-notes"><p><strong>Khazna note:</strong> ${esc(r.khazna_note)}</p></div>` : ""}
-        ${r.manual_checks_required?.length ? `
+        ${r.funder_compliance_note ? `<div class="policy-notes"><p><strong>Funder compliance:</strong> ${esc(r.funder_compliance_note)}</p></div>` : ""}
+        ${r.risk_flag ? `<p style="color:var(--danger);font-size:13px;display:flex;gap:6px;align-items:flex-start"><span>[!]</span><span>${esc(r.risk_flag)}</span></p>` : ""}
+        <p style="font-size:12px"><strong>Verification:</strong> ${esc(r.verification_status)}</p>
+        ${!isKhazna ? `
+          <div class="verify-row">
+            <span class="verify-lbl">Verify on:</span>
+            ${vl.re3data    ? `<a href="${esc(vl.re3data)}"    target="_blank" class="vlink">re3data </a>` : ""}
+            ${vl.fairsharing? `<a href="${esc(vl.fairsharing)}" target="_blank" class="vlink">FAIRsharing </a>` : ""}
+          </div>` : `
+          <div class="verify-row">
+            <span class="verify-lbl">Contact:</span>
+            <a href="mailto:khazna@ku.ac.ae" class="vlink">khazna@ku.ac.ae</a>
+            <a href="https://khazna.ku.ac.ae" target="_blank" class="vlink">khazna.ku.ac.ae </a>
+          </div>`}
+      </div>
+    </div>`;
+}
+
+export function renderNextActions(actions, global_notes) {
+  if (!actions?.length) return "";
+  return `
+    <div class="card mt-6">
+      <div class="card-header"><h2>[OK] Next best actions</h2></div>
+      <div class="card-body">
+        <ol class="actions-list">
+          ${actions.map((a, i) => `
+            <li class="action-item">
+              <span class="a-num">${i + 1}</span>
+              <span>${esc(a)}</span>
+            </li>`).join("")}
+        </ol>
+        ${global_notes ? `<p class="global-note">${esc(global_notes)}</p>` : ""}
+      </div>
+    </div>`;
+}
+
+export function renderManuscriptUnderstanding(m) {
+  if (!m) return "";
+  return `
+    <div class="card understanding">
+      <div class="card-header"><h2> Manuscript understanding</h2></div>
+      <div class="card-body">
+        <p style="font-size:14px">${esc(m.summary)}</p>
+        <div class="tag-row">
+          ${m.discipline    ? `<span class="badge b-primary">${esc(m.discipline)}</span>` : ""}
+          ${m.article_type  ? `<span class="badge b-muted">${esc(m.article_type)}</span>` : ""}
+        </div>
+        ${m.inferred_criteria?.length ? `
           <div>
-            <h5 style="font-size:13px;font-weight:600;margin-bottom:6px">[!] Manual checks required</h5>
-            <ul class="checks-list">${r.manual_checks_required.map(c => `<li>${esc(c)}</li>`).join("")}</ul>
+            <h5 style="font-size:13px;font-weight:600;margin-bottom:6px">Inferred selection criteria</h5>
+            <ul style="list-style:disc;padding-left:18px;display:flex;flex-direction:column;gap:3px">
+              ${m.inferred_criteria.map(c => `<li style="font-size:13px;color:var(--text-muted)">${esc(c)}</li>`).join("")}
+            </ul>
+          </div>` : ""}
+        ${m.assumptions?.length ? `
+          <div class="acc">
+            <button class="acc-btn" onclick="this.nextElementSibling.classList.toggle('open')">
+              Assumptions made (${m.assumptions.length}) <span>▾</span>
+            </button>
+            <div class="acc-body">
+              <ul>${m.assumptions.map(a => `<li>${esc(a)}</li>`).join("")}</ul>
+            </div>
           </div>` : ""}
       </div>
     </div>`;
 }
 
-function renderJournalResults(result, container) {
-  const journals = result.journals || [];
-  const extended = result.extended_list || [];
-  const total    = journals.length + extended.length;
-
-  container.innerHTML = `
-    ${renderMascotRow('Here are your journal recommendations with full Green OA policy breakdown.')}
-    <div class="results-header">
-      <h2 class="results-title">Analysis</h2>
-      <div class="results-meta">
-        <span class="count-chip">${total} journals found</span>
-        <button class="btn btn-ghost" id="journal-reset"> Start over</button>
+export function renderSubmissionChecklist(sc) {
+  if (!sc) return "";
+  const steps = (sc.key_steps || []).map((s, i) =>
+    `<li class="action-item"><span class="a-num">${i+1}</span><span>${esc(s)}</span></li>`
+  ).join("");
+  const docs = (sc.required_documents || []).map(d =>
+    `<li style="font-size:13px;color:var(--text-muted)">${esc(d)}</li>`
+  ).join("");
+  return `
+    <div class="acc">
+      <button class="acc-btn" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.acc-arrow').classList.toggle('open')">
+        <span>Submission checklist &amp; requirements</span>
+        <span class="acc-arrow" style="transition:transform .2s;display:inline-block">&#9662;</span>
+      </button>
+      <div class="acc-body">
+        <dl class="r-specs" style="margin-bottom:12px">
+          <div><dt>Submission system</dt><dd>${esc(sc.submission_system || "Not specified")}</dd></div>
+          <div><dt>Word limit</dt><dd>${esc(sc.word_limit || "Not specified")}</dd></div>
+          <div><dt>Cover letter required</dt><dd>${esc(sc.cover_letter_required || "Unclear")}</dd></div>
+          <div><dt>Data availability</dt><dd>${esc(sc.data_availability_statement || "Unclear")}</dd></div>
+          <div><dt>Ethical approval</dt><dd>${esc(sc.ethical_approval || "If applicable")}</dd></div>
+        </dl>
+        ${sc.formatting_notes ? `<p style="font-size:13px;margin-bottom:10px"><strong>Formatting:</strong> ${esc(sc.formatting_notes)}</p>` : ""}
+        ${docs ? `<div style="margin-bottom:10px"><strong style="font-size:13px">Required documents:</strong><ul style="list-style:disc;padding-left:18px;margin-top:4px">${docs}</ul></div>` : ""}
+        ${steps ? `<div><strong style="font-size:13px">Key submission steps:</strong><ol class="actions-list" style="margin-top:6px">${steps}</ol></div>` : ""}
       </div>
-    </div>
-
-    ${renderManuscriptUnderstanding(result.manuscript_understanding)}
-
-    <h3 style="font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:16px">🏆 Best-fit journal shortlist</h3>
-    ${journals.map((j, i) => renderJournalCard(j, i)).join("")}
-    ${renderExtendedList(extended)}
-
-    ${renderRepoRecommendation(result.repository_recommendation)}
-    ${result.khazna ? renderKhaznaCard(result.khazna, "article") : ""}
-    ${renderNextActions(result.next_actions, result.global_notes)}
-    ${renderHelpCard()}
-  `;
-
-  // Export buttons
-  document.getElementById("export-bibtex")?.addEventListener("click", () => exportCitations(result.journals, "bibtex"));
-  document.getElementById("export-ris")?.addEventListener("click",    () => exportCitations(result.journals, "ris"));
-  document.getElementById("journal-reset")?.addEventListener("click", () => {
-    container.innerHTML = "";
-    container.classList.add("hidden");
-    document.getElementById("journal-progress")?.classList.remove("show");
-    document.getElementById("journal-form")?.reset();
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  });
-
-  container.scrollIntoView({ behavior: "smooth", block: "start" });
+    </div>`;
 }
 
-// ── Subject browse mode (NEW - does not affect existing journalTab) ────────
-export function subjectTab() {
-  const form    = document.getElementById("subject-form");
-  const results = document.getElementById("subject-results");
-  if (!form) return;
-
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const input   = document.getElementById("s-subject");
-    const subject = input?.value?.trim();
-    if (!subject) return;
-
-    const submitBtn = form.querySelector(".btn-primary");
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = "Searching journals...";
-    results.innerHTML = "";
-    results.classList.remove("hidden");
-
-    showProgress("subject-progress", [
-      "Identifying your subject...",
-      "Searching journal database...",
-      "Building results..."
-    ]);
-
-    try {
-      setStep("subject-progress", 1);
-      const data = await callAPI("/api/browse-subject", {
-        subject,
-        model: getModel(),
-        language: getLanguage()
-      });
-      setStep("subject-progress", 2);
-      doneProgress("subject-progress",
-        data.result.journals?.length
-          ? `Found ${data.result.journals.length} journals`
-          : "Search complete"
-      );
-      setTimeout(() => renderSubjectResults(data.result, results), 300);
-    } catch (err) {
-      document.getElementById("subject-progress").innerHTML =
-        `<div class="p-step" style="color:var(--danger)">
-           <span class="p-dot" style="background:var(--danger)"></span>
-           <span>Error: ${esc(err.message)}</span>
-         </div>`;
-    } finally {
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = "Search journals";
-    }
-  });
-
-  // Reset button
-  document.getElementById("subject-reset")?.addEventListener("click", resetSubject);
+export function renderCoverLetterBtn(journal, manuscript) {
+  const safe = (s) => String(s || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/\n/g, " ");
+  const jName  = safe(journal.name);
+  const jPub   = safe(journal.publisher);
+  const mTitle = safe(manuscript?.title);
+  const mAbs   = safe((manuscript?.abstract || "").substring(0, 300));
+  const mType  = safe(manuscript?.article_type || "Original research article");
+  const mDisc  = safe(manuscript?.discipline);
+  const uid    = (journal.issn || journal.name || "").replace(/[^a-zA-Z0-9]/g, "");
+  return `
+    <button class="btn btn-ghost" style="margin-top:4px;font-size:13px"
+      onclick="generateCoverLetter('${jName}','${jPub}','${mTitle}','${mAbs}','${mType}','${mDisc}','${uid}',this)">
+      Generate cover letter
+    </button>
+    <div id="cover-letter-${uid}"></div>`;
 }
-
-function resetSubject() {
-  const results = document.getElementById("subject-results");
-  if (results) { results.innerHTML = ""; results.classList.add("hidden"); }
-  document.getElementById("subject-progress")?.classList.remove("show");
-  document.getElementById("subject-form")?.reset();
-}
-
-function renderSubjectResults(result, container) {
-  const journals = result.journals || [];
-
-  // Not found state
-  if (result.confidence === "not_found" || !journals.length) {
-    container.innerHTML = `
-      <div class="subj-notfound">
-        <div class="subj-notfound-icon">?</div>
-        <h3>No journals found</h3>
-        <p>${esc(result.user_message || "Try a different subject term.")}</p>
-        <button class="btn btn-ghost" onclick="document.getElementById('subject-form').reset();document.getElementById('subject-results').classList.add('hidden')">
-          Try again
-        </button>
-      </div>`;
-    return;
-  }
-
-  // User message banner (correction / near match)
-  const banner = result.user_message
-    ? `<div class="subj-banner">
-         <span class="subj-banner-icon">${result.confidence === "near" ? "Corrected:" : "Note:"}</span>
-         ${esc(result.user_message)}
-       </div>`
-    : "";
-
-  // Build table rows
-  const rows = journals.map((j, i) => {
-    const vl = j.verify_links || {};
-    const q  = j.quartile;
-    const qBadge = q
-      ? `<span class="badge ${{"Q1":"b-q1","Q2":"b-q2","Q3":"b-q3","Q4":"b-q4"}[q]||"b-muted"}">${esc(q)}</span>`
-      : '<span style="color:var(--text-light);font-size:12px">-</span>';
-    const oaBadge = j.open_access === "Yes"
-      ? '<span class="badge b-success" style="font-size:10px">OA</span>'
-      : "";
-    return `
-      <tr>
-        <td style="color:var(--text-muted);font-size:12px;font-family:'JetBrains Mono',monospace">${i + 1}</td>
-        <td>
-          <strong style="font-size:13px">${esc(j.name)}</strong>
-          <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${esc(j.publisher || "")}</div>
-        </td>
-        <td style="font-family:'JetBrains Mono',monospace;font-size:12px">${esc(j.issn || "-")}</td>
-        <td>${qBadge} ${oaBadge}</td>
-        <td style="font-family:'JetBrains Mono',monospace;font-size:12px">${j.h_index || "-"}</td>
-        <td>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            ${vl.scimago        ? `<a href="${esc(vl.scimago)}"        target="_blank" class="el el-scopus">SCImago</a>` : ""}
-            ${vl.sherpa_romeo   ? `<a href="${esc(vl.sherpa_romeo)}"   target="_blank" class="el el-sherpa">SHERPA</a>` : ""}
-            ${vl.doaj           ? `<a href="${esc(vl.doaj)}"           target="_blank" class="el" style="background:#fef3c7;color:#92400e">DOAJ</a>` : ""}
-            ${vl.scopus_sources ? `<a href="${esc(vl.scopus_sources)}" target="_blank" class="el" style="background:#e0e7ff;color:#3730a3">Scopus</a>` : ""}
-            ${vl.issn_display   ? `<span class="copy-chip copy-chip-sm" onclick="copyToClipboard('${esc(vl.issn_display)}',this)" title="Copy ISSN">${esc(vl.issn_display)} &#x1F4CB;</span>` : ""}
-          </div>
-        </td>
-      </tr>`;
-  }).join("");
-
-  container.innerHTML = `
-    ${renderMascotRow('Here are the top journals for ' + esc(result.normalised) + '.')}
-    <div class="results-header">
-      <h2 class="results-title">Top journals: ${esc(result.normalised)}</h2>
-      <div class="results-meta">
-        <span class="count-chip">${journals.length} journals</span>
-        <button class="btn btn-ghost" id="subject-reset-btn">Reset</button>
-      </div>
-    </div>
-
-    ${banner}
-
-    <div class="card" style="overflow:hidden;margin-bottom:20px">
-      <table class="ext-table" style="width:100%">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Journal</th>
-            <th>ISSN</th>
-            <th>Quartile</th>
-            <th>H-index</th>
-            <th>Verify</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>
-
-    <div class="subj-tip">
-      <strong>Want deeper analysis?</strong>
-      Switch to <em>Analyse manuscript</em> mode above for full Green OA policy,
-      submission strategy, and personalised recommendations.
-    </div>
-  `;
-
-  document.getElementById("subject-reset-btn")?.addEventListener("click", resetSubject);
-  container.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
-// ── Export citations ──────────────────────────────────────────────────────
-async function exportCitations(journals, format) {
-  try {
-    const data = await callAPI("/api/export-citations", { journals, format });
-    const blob = new Blob([data.content], { type: "text/plain" });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement("a");
-    a.href = url; a.download = data.filename; a.click();
-    URL.revokeObjectURL(url);
-  } catch(err) {
-    alert("Export failed: " + err.message);
-  }
-}
-
-// ── Cover letter generator ─────────────────────────────────────────────────
-window.generateCoverLetter = async function(jName, jPub, mTitle, mAbs, mType, mDisc, btn) {
-  const containerId = "cover-letter-" + jName.replace(/\s/g, "");
-  const container   = document.getElementById(containerId);
-  if (!container) return;
-
-  btn.disabled = true;
-  btn.textContent = "Generating...";
-  container.innerHTML = `<div class="progress-box show" style="margin-top:8px"><div class="p-step active"><span class="p-dot"></span><span>Writing cover letter...</span></div></div>`;
-
-  try {
-    const data = await callAPI("/api/cover-letter", {
-      manuscript_title: mTitle,
-      abstract:         mAbs,
-      journal_name:     jName,
-      publisher:        jPub,
-      article_type:     mType,
-      discipline:       mDisc,
-      language:         getLanguage(),
-      model:            getModel()
-    });
-    const r = data.result;
-    container.innerHTML = `
-      <div class="card" style="margin-top:10px;border:1.5px solid var(--primary-light)">
-        <div class="card-header" style="background:var(--primary-xlight)">
-          <h2 style="font-size:16px">✉ Cover letter — ${esc(jName)}</h2>
-          <p style="font-size:12px">Subject line: <strong>${esc(r.subject_line || "")}</strong> · ${r.word_count || ""} words</p>
-        </div>
-        <div class="card-body">
-          <pre style="white-space:pre-wrap;font-family:'DM Sans',sans-serif;font-size:13px;line-height:1.7">${esc(r.cover_letter || "")}</pre>
-          <div style="margin-top:12px;display:flex;gap:8px">
-            <button class="btn btn-ghost" style="font-size:12px" onclick="downloadCoverLetter('${esc(r.cover_letter || "")}','${esc(jName)}')">⬇ Download .txt</button>
-            <button class="btn btn-ghost" style="font-size:12px" onclick="navigator.clipboard.writeText(this.closest('.card').querySelector('pre').textContent).then(()=>{this.textContent='Copied!'})">📋 Copy</button>
-          </div>
-        </div>
-      </div>`;
-  } catch(err) {
-    container.innerHTML = `<p style="color:var(--danger);font-size:13px;margin-top:8px">Error: ${esc(err.message)}</p>`;
-  } finally {
-    btn.disabled = false;
-    btn.textContent = "✉ Generate cover letter";
-  }
-};
-
-window.downloadCoverLetter = function(text, journalName) {
-  const blob = new Blob([text], { type: "text/plain" });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement("a");
-  a.href = url;
-  a.download = `cover-letter-${journalName.replace(/\s+/g, "-").toLowerCase()}.txt`;
-  a.click();
-  URL.revokeObjectURL(url);
-};
