@@ -326,8 +326,10 @@ function renderSubjectResults(result, container) {
 
   // Build table rows
   const rows = journals.map((j, i) => {
-    const vl = j.verify_links || {};
-    const q  = j.quartile;
+    const vl   = j.verify_links || {};
+    const q    = j.quartile;
+    const uid  = (j.issn || j.name || "").replace(/[^a-zA-Z0-9]/g, "");
+    const safe = (s) => String(s || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/\n/g, " ");
     const qBadge = q
       ? `<span class="badge ${{"Q1":"b-q1","Q2":"b-q2","Q3":"b-q3","Q4":"b-q4"}[q]||"b-muted"}">${esc(q)}</span>`
       : '<span style="color:var(--text-light);font-size:12px">-</span>';
@@ -335,7 +337,7 @@ function renderSubjectResults(result, container) {
       ? '<span class="badge b-success" style="font-size:10px">OA</span>'
       : "";
     return `
-      <tr>
+      <tr id="row-${uid}">
         <td style="color:var(--text-muted);font-size:12px;font-family:'JetBrains Mono',monospace">${i + 1}</td>
         <td>
           <strong style="font-size:13px">${esc(j.name)}</strong>
@@ -345,12 +347,56 @@ function renderSubjectResults(result, container) {
         <td>${qBadge} ${oaBadge}</td>
         <td style="font-family:'JetBrains Mono',monospace;font-size:12px">${j.h_index || "-"}</td>
         <td>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
             ${vl.scimago        ? `<a href="${esc(vl.scimago)}"        target="_blank" class="el el-scopus">SCImago</a>` : ""}
             ${vl.sherpa_romeo   ? `<a href="${esc(vl.sherpa_romeo)}"   target="_blank" class="el el-sherpa">SHERPA</a>` : ""}
             ${vl.doaj           ? `<a href="${esc(vl.doaj)}"           target="_blank" class="el" style="background:#fef3c7;color:#92400e">DOAJ</a>` : ""}
             ${vl.scopus_sources ? `<a href="${esc(vl.scopus_sources)}" target="_blank" class="el" style="background:#e0e7ff;color:#3730a3">Scopus</a>` : ""}
             ${vl.issn_display   ? `<span class="copy-chip copy-chip-sm" onclick="copyToClipboard('${esc(vl.issn_display)}',this)" title="Copy ISSN">${esc(vl.issn_display)} &#x1F4CB;</span>` : ""}
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="el" style="background:#e0e7ff;color:#3730a3;cursor:pointer;border:none"
+              onclick="showSubjectCoverLetterForm('${uid}','${safe(j.name)}','${safe(j.publisher)}',this)">
+              Cover letter
+            </button>
+            <button class="el" style="background:#d1fae5;color:#065f46;cursor:pointer;border:none"
+              onclick="analyseFullyFromSubject('${safe(j.name)}','${safe(j.issn || "")}')">
+              Analyse fully
+            </button>
+          </div>
+        </td>
+      </tr>
+      <tr id="clform-${uid}" style="display:none">
+        <td colspan="6" style="padding:12px 14px;background:#f8f9fc;border-top:none">
+          <div class="subj-cl-form">
+            <p style="font-size:13px;font-weight:600;margin-bottom:10px">
+              Generate cover letter for <em>${esc(j.name)}</em>
+            </p>
+            <div class="form-grid form-2col" style="max-width:700px;gap:10px">
+              <div class="form-group">
+                <label style="font-size:12px">Manuscript title <span class="req">*</span></label>
+                <input id="cl-title-${uid}" type="text" placeholder="Your manuscript title">
+              </div>
+              <div class="form-group">
+                <label style="font-size:12px">Your name (optional)</label>
+                <input id="cl-author-${uid}" type="text" placeholder="e.g. Dr. Nikesh">
+              </div>
+              <div class="form-group form-full">
+                <label style="font-size:12px">Abstract <span class="req">*</span></label>
+                <textarea id="cl-abstract-${uid}" rows="4" placeholder="Paste your abstract here..."></textarea>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <button class="btn btn-primary" style="max-width:220px;font-size:13px;padding:10px 16px"
+                onclick="submitSubjectCoverLetter('${uid}','${safe(j.name)}','${safe(j.publisher)}',this)">
+                Generate &amp; download
+              </button>
+              <button class="btn btn-ghost" style="font-size:13px"
+                onclick="document.getElementById('clform-${uid}').style.display='none'">
+                Cancel
+              </button>
+            </div>
+            <div id="cl-status-${uid}" style="margin-top:8px"></div>
           </div>
         </td>
       </tr>`;
@@ -377,7 +423,7 @@ function renderSubjectResults(result, container) {
             <th>ISSN</th>
             <th>Quartile</th>
             <th>H-index</th>
-            <th>Verify</th>
+            <th>Verify &amp; Actions</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
@@ -461,4 +507,87 @@ window.downloadCoverLetter = function(text, journalName) {
   a.download = `cover-letter-${journalName.replace(/\s+/g, "-").toLowerCase()}.txt`;
   a.click();
   URL.revokeObjectURL(url);
+};
+
+// ── Subject browse — cover letter form ───────────────────────────────────
+window.showSubjectCoverLetterForm = function(uid, jName, jPub, btn) {
+  const row = document.getElementById("clform-" + uid);
+  if (!row) return;
+  const isVisible = row.style.display !== "none";
+  row.style.display = isVisible ? "none" : "table-row";
+  btn.textContent = isVisible ? "Cover letter" : "Hide form";
+};
+
+window.submitSubjectCoverLetter = async function(uid, jName, jPub, btn) {
+  const title    = document.getElementById("cl-title-" + uid)?.value?.trim();
+  const abstract = document.getElementById("cl-abstract-" + uid)?.value?.trim();
+  const author   = document.getElementById("cl-author-" + uid)?.value?.trim();
+  const status   = document.getElementById("cl-status-" + uid);
+
+  if (!title || !abstract) {
+    if (status) status.innerHTML = '<p style="color:var(--danger);font-size:12px">Please fill in title and abstract.</p>';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Generating...";
+  if (status) status.innerHTML = '<p style="font-size:12px;color:var(--primary)">Writing cover letter...</p>';
+
+  try {
+    const data = await callAPI("/api/cover-letter", {
+      manuscript_title: title,
+      abstract:         abstract,
+      journal_name:     jName,
+      publisher:        jPub,
+      author_name:      author,
+      language:         getLanguage(),
+      model:            getModel()
+    });
+    const r = data.result;
+    // Download as .txt directly
+    const full = `Subject: ${r.subject_line || ""}
+
+${r.cover_letter || ""}`;
+    const blob  = new Blob([full], { type: "text/plain" });
+    const url   = URL.createObjectURL(blob);
+    const a     = document.createElement("a");
+    a.href = url;
+    a.download = "cover-letter-" + jName.replace(/\s+/g, "-").toLowerCase().substring(0, 30) + ".txt";
+    a.click();
+    URL.revokeObjectURL(url);
+    if (status) status.innerHTML = '<p style="color:var(--success);font-size:12px;font-weight:600">Downloaded!</p>';
+    setTimeout(() => { if (status) status.innerHTML = ""; }, 3000);
+  } catch(err) {
+    if (status) status.innerHTML = `<p style="color:var(--danger);font-size:12px">Error: ${esc(err.message)}</p>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Generate & download";
+  }
+};
+
+// ── Subject browse — analyse fully ───────────────────────────────────────
+window.analyseFullyFromSubject = function(jName, jIssn) {
+  // Pre-fill preferred journals field
+  const prefField = document.getElementById("j-preferred");
+  if (prefField) prefField.value = jName;
+
+  // Switch to manuscript mode
+  switchMode("manuscript");
+
+  // Show a notice banner
+  const form = document.getElementById("journal-form");
+  if (form) {
+    const existing = document.getElementById("analyse-notice");
+    if (!existing) {
+      const notice = document.createElement("div");
+      notice.id = "analyse-notice";
+      notice.className = "subj-banner";
+      notice.style.marginBottom = "16px";
+      notice.innerHTML = `<span class="subj-banner-icon">Pre-filled:</span> <strong>${esc(jName)}</strong> added to preferred journals. Add your manuscript details and submit.`;
+      form.parentNode.insertBefore(notice, form);
+    }
+  }
+
+  // Scroll to form
+  document.querySelector(".tabs-bar")?.scrollIntoView({ behavior: "smooth", block: "start" });
 };
