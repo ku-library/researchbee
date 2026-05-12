@@ -672,3 +672,16 @@ textarea { resize: vertical; min-height: 90px; }
 
 /* Accordion arrow rotation */
 .acc-arrow.open { transform: rotate(180deg) !important; }
+
+/* ── Subject browse inline cover letter form ────────────────────────────── */
+.subj-cl-form {
+  padding: 4px 0;
+}
+.subj-cl-form .form-group label {
+  font-size: 12px;
+}
+.subj-cl-form input,
+.subj-cl-form textarea {
+  font-size: 13px;
+  padding: 8px 10px;
+}
