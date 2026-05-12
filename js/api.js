@@ -1,4 +1,4 @@
-// api.js — fetch wrapper for Research Navigator backend
+// api.js - fetch wrapper for Research Navigator backend
 // Set HF_BASE to your HuggingFace Space URL before deploying
 const HF_BASE = "https://nikeshn-researchbee.hf.space";
 
@@ -17,4 +17,8 @@ export async function callAPI(endpoint, payload) {
 
 export function getModel() {
   return document.querySelector(".model-btn.active")?.dataset.model || "gpt-4o-mini";
+}
+
+export function getLanguage() {
+  return document.querySelector(".lang-btn.active")?.dataset.lang || "english";
 }

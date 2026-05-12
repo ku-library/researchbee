@@ -1,11 +1,12 @@
 // journal.js - Journal submission tab
-import { callAPI, getModel } from "./api.js";
+import { callAPI, getModel, getLanguage } from "./api.js";
 import { showProgress, setStep, doneProgress } from "./app.js";
 import {
   esc, quartileBadge, confidenceBadge, oaStatusBadge,
   renderVersionBlock, renderVerifyLinks, renderOpenAlexMetrics,
   renderRankingBlock, renderKhaznaCard, renderHelpCard,
-  renderNextActions, renderManuscriptUnderstanding, renderMascotRow
+  renderNextActions, renderManuscriptUnderstanding, renderMascotRow,
+  renderSubmissionChecklist, renderCoverLetterBtn
 } from "./render.js";
 
 export function journalTab() {
@@ -31,8 +32,9 @@ export function journalTab() {
 
     try {
       const manuscript = getManuscriptData();
+      window._lastManuscript = manuscript;
       setStep("journal-progress", 1);
-      const data = await callAPI("/api/analyze-journal", { manuscript, model: getModel() });
+      const data = await callAPI("/api/analyze-journal", { manuscript, model: getModel(), language: getLanguage() });
       setStep("journal-progress", 2);
       await new Promise(r => setTimeout(r, 300));
       setStep("journal-progress", 3);
@@ -124,6 +126,9 @@ function renderJournalCard(j, idx) {
         </div>
 
         ${policyNotes ? `<div class="policy-notes">${policyNotes}</div>` : ""}
+        ${renderSubmissionChecklist(j.submission_checklist)}
+        ${renderCoverLetterBtn(j, window._lastManuscript)}
+        <div id="cover-letter-${j.issn || j.name?.replace(/\s/g,'')}"></div>
         ${renderOpenAlexMetrics(j.openalex)}
         ${renderVerifyLinks(j.verify_links)}
       </div>
@@ -220,6 +225,9 @@ function renderJournalResults(result, container) {
     ${renderHelpCard()}
   `;
 
+  // Export buttons
+  document.getElementById("export-bibtex")?.addEventListener("click", () => exportCitations(result.journals, "bibtex"));
+  document.getElementById("export-ris")?.addEventListener("click",    () => exportCitations(result.journals, "ris"));
   document.getElementById("journal-reset")?.addEventListener("click", () => {
     container.innerHTML = "";
     container.classList.add("hidden");
@@ -259,7 +267,8 @@ export function subjectTab() {
       setStep("subject-progress", 1);
       const data = await callAPI("/api/browse-subject", {
         subject,
-        model: getModel()
+        model: getModel(),
+        language: getLanguage()
       });
       setStep("subject-progress", 2);
       doneProgress("subject-progress",
@@ -386,3 +395,71 @@ function renderSubjectResults(result, container) {
   document.getElementById("subject-reset-btn")?.addEventListener("click", resetSubject);
   container.scrollIntoView({ behavior: "smooth", block: "start" });
 }
+
+// ── Export citations ──────────────────────────────────────────────────────
+async function exportCitations(journals, format) {
+  try {
+    const data = await callAPI("/api/export-citations", { journals, format });
+    const blob = new Blob([data.content], { type: "text/plain" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href = url; a.download = data.filename; a.click();
+    URL.revokeObjectURL(url);
+  } catch(err) {
+    alert("Export failed: " + err.message);
+  }
+}
+
+// ── Cover letter generator ─────────────────────────────────────────────────
+window.generateCoverLetter = async function(jName, jPub, mTitle, mAbs, mType, mDisc, btn) {
+  const containerId = "cover-letter-" + jName.replace(/\s/g, "");
+  const container   = document.getElementById(containerId);
+  if (!container) return;
+
+  btn.disabled = true;
+  btn.textContent = "Generating...";
+  container.innerHTML = `<div class="progress-box show" style="margin-top:8px"><div class="p-step active"><span class="p-dot"></span><span>Writing cover letter...</span></div></div>`;
+
+  try {
+    const data = await callAPI("/api/cover-letter", {
+      manuscript_title: mTitle,
+      abstract:         mAbs,
+      journal_name:     jName,
+      publisher:        jPub,
+      article_type:     mType,
+      discipline:       mDisc,
+      language:         getLanguage(),
+      model:            getModel()
+    });
+    const r = data.result;
+    container.innerHTML = `
+      <div class="card" style="margin-top:10px;border:1.5px solid var(--primary-light)">
+        <div class="card-header" style="background:var(--primary-xlight)">
+          <h2 style="font-size:16px">✉ Cover letter — ${esc(jName)}</h2>
+          <p style="font-size:12px">Subject line: <strong>${esc(r.subject_line || "")}</strong> · ${r.word_count || ""} words</p>
+        </div>
+        <div class="card-body">
+          <pre style="white-space:pre-wrap;font-family:'DM Sans',sans-serif;font-size:13px;line-height:1.7">${esc(r.cover_letter || "")}</pre>
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <button class="btn btn-ghost" style="font-size:12px" onclick="downloadCoverLetter('${esc(r.cover_letter || "")}','${esc(jName)}')">⬇ Download .txt</button>
+            <button class="btn btn-ghost" style="font-size:12px" onclick="navigator.clipboard.writeText(this.closest('.card').querySelector('pre').textContent).then(()=>{this.textContent='Copied!'})">📋 Copy</button>
+          </div>
+        </div>
+      </div>`;
+  } catch(err) {
+    container.innerHTML = `<p style="color:var(--danger);font-size:13px;margin-top:8px">Error: ${esc(err.message)}</p>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "✉ Generate cover letter";
+  }
+};
+
+window.downloadCoverLetter = function(text, journalName) {
+  const blob = new Blob([text], { type: "text/plain" });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href = url;
+  a.download = `cover-letter-${journalName.replace(/\s+/g, "-").toLowerCase()}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+};

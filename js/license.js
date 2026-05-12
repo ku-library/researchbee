@@ -1,5 +1,5 @@
 // license.js - License checking tab
-import { callAPI, getModel } from "./api.js";
+import { callAPI, getModel, getLanguage } from "./api.js";
 import { showProgress, setStep, doneProgress } from "./app.js";
 import {
   esc, oaStatusBadge, renderVersionBlock, renderVerifyLinks,
@@ -28,7 +28,7 @@ export function licenseTab() {
     try {
       const license_input = getLicenseData();
       setStep("license-progress", 1);
-      const data = await callAPI("/api/check-license", { license_input, model: getModel() });
+      const data = await callAPI("/api/check-license", { license_input, model: getModel(), language: getLanguage() });
       setStep("license-progress", 2);
       doneProgress("license-progress", "[OK] Policy check complete");
       setTimeout(() => renderLicenseResults(data.result, results), 400);

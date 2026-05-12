@@ -44,6 +44,14 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
 // Initialise - show journals tab by default
 activateTab("journals");
 
+// ── Language selector
+document.querySelectorAll(".lang-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".lang-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+  });
+});
+
 // ── Model selector ─────────────────────────────────────────────────────────
 document.querySelectorAll(".model-btn").forEach(btn => {
   btn.addEventListener("click", () => {
