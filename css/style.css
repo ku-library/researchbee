@@ -813,3 +813,14 @@ textarea { resize: vertical; min-height: 90px; }
 .mode-btn.active .mode-tag {
   background: #1a2744; color: white;
 }
+
+/* ── Arabic instruction banner ──────────────────────────────────────────── */
+.ar-banner {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: linear-gradient(135deg, #fdf4e7 0%, #fef9f0 100%);
+  border: 1.5px solid #fcd34d; border-radius: var(--radius);
+  padding: 14px 18px; margin-bottom: 20px;
+  font-size: 14px; color: #92400e; direction: rtl; text-align: right;
+  font-family: 'DM Sans', sans-serif; line-height: 1.6;
+}
+.ar-banner-icon { font-size: 20px; flex-shrink: 0; }
