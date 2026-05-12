@@ -113,7 +113,7 @@
           </div>
           <div class="card-body">
             <div class="form-group" style="max-width:500px">
-              <label for="s-subject">Subject / discipline <span class="req">*</span></label>
+              <label for="s-subject" id="lbl-subject">Subject / discipline <span class="req">*</span></label>
               <input id="s-subject" type="text" required
                 placeholder="e.g. Petroleum Engineering, Machine Learning, Cardiology..."
                 autocomplete="off">
@@ -122,7 +122,7 @@
               </div>
             </div>
             <button type="submit" class="btn btn-primary" style="max-width:300px;margin-top:8px">
-              Search journals
+              <span id="btn-subject-submit">Search journals</span>
             </button>
           </div>
         </div>
@@ -142,23 +142,23 @@
         <div class="card-body">
           <div class="form-grid form-2col">
             <div class="form-group form-full">
-              <label for="j-title">Title <span class="req">*</span></label>
+              <label for="j-title" id="lbl-title">Title <span class="req">*</span></label>
               <input id="j-title" type="text" required placeholder="Full manuscript title">
             </div>
             <div class="form-group form-full">
-              <label for="j-abstract">Abstract <span class="req">*</span></label>
+              <label for="j-abstract" id="lbl-abstract">Abstract <span class="req">*</span></label>
               <textarea id="j-abstract" required rows="6" placeholder="Paste your full abstract here..."></textarea>
             </div>
             <div class="form-group">
-              <label for="j-keywords">Keywords (comma-separated)</label>
+              <label for="j-keywords" id="lbl-keywords">Keywords (comma-separated)</label>
               <input id="j-keywords" type="text" placeholder="e.g. machine learning, library, open access">
             </div>
             <div class="form-group">
-              <label for="j-discipline">Discipline / sub-discipline</label>
+              <label for="j-discipline" id="lbl-discipline">Discipline / sub-discipline</label>
               <input id="j-discipline" type="text" placeholder="e.g. Library and Information Science">
             </div>
             <div class="form-group">
-              <label for="j-article-type">Article type</label>
+              <label for="j-article-type" id="lbl-article-type">Article type</label>
               <select id="j-article-type">
                 <option>Original research article</option>
                 <option>Review article</option>
@@ -172,7 +172,7 @@
               </select>
             </div>
             <div class="form-group">
-              <label for="j-methods">Methods (brief)</label>
+              <label for="j-methods" id="lbl-methods">Methods (brief)</label>
               <input id="j-methods" type="text" placeholder="e.g. survey, experiment, case study, RAG pipeline">
             </div>
           </div>
@@ -181,7 +181,7 @@
             <div class="section-label">Strategy &amp; compliance</div>
             <div class="form-grid form-2col">
               <div class="form-group">
-                <label for="j-oa-pref">OA preference</label>
+                <label for="j-oa-pref" id="lbl-oa-pref">OA preference</label>
                 <select id="j-oa-pref">
                   <option>Either</option>
                   <option>Green OA only</option>
@@ -190,11 +190,11 @@
                 </select>
               </div>
               <div class="form-group">
-                <label for="j-apc">APC budget</label>
+                <label for="j-apc" id="lbl-apc">APC budget</label>
                 <input id="j-apc" type="text" placeholder="e.g. up to USD 2000, or no APC">
               </div>
               <div class="form-group">
-                <label for="j-ranking-pref">Ranking filter</label>
+                <label for="j-ranking-pref" id="lbl-ranking-pref">Ranking filter</label>
                 <select id="j-ranking-pref">
                   <option>No filter</option>
                   <option>Q1</option>
@@ -207,7 +207,7 @@
                 </select>
               </div>
               <div class="form-group">
-                <label for="j-ranking-src">Ranking source</label>
+                <label for="j-ranking-src" id="lbl-ranking-src">Ranking source</label>
                 <select id="j-ranking-src">
                   <option>Either (label clearly)</option>
                   <option>Scopus</option>
@@ -215,7 +215,7 @@
                 </select>
               </div>
               <div class="form-group">
-                <label for="j-speed">Publication speed</label>
+                <label for="j-speed" id="lbl-speed">Publication speed</label>
                 <select id="j-speed">
                   <option>Standard</option>
                   <option>Fast turnaround preferred</option>
@@ -223,7 +223,7 @@
                 </select>
               </div>
               <div class="form-group">
-                <label for="j-repo-target">Repository target</label>
+                <label for="j-repo-target" id="lbl-repo-target">Repository target</label>
                 <select id="j-repo-target">
                   <option>Institutional repository</option>
                   <option>Subject repository</option>
@@ -232,34 +232,34 @@
                 </select>
               </div>
               <div class="form-group">
-                <label for="j-funder">Funder</label>
+                <label for="j-funder" id="lbl-funder">Funder</label>
                 <input id="j-funder" type="text" placeholder="e.g. ERC, NIH, Wellcome, cOAlition S">
               </div>
               <div class="form-group">
-                <label for="j-institution">Institution</label>
+                <label for="j-institution" id="lbl-institution">Institution</label>
                 <input id="j-institution" type="text" placeholder="e.g. Khalifa University">
               </div>
               <div class="form-group">
-                <label for="j-country">Country / region</label>
+                <label for="j-country" id="lbl-country">Country / region</label>
                 <input id="j-country" type="text" placeholder="e.g. UAE">
               </div>
               <div class="form-group">
-                <label for="j-audience">Target audience</label>
+                <label for="j-audience" id="lbl-audience">Target audience</label>
                 <input id="j-audience" type="text" placeholder="e.g. library practitioners, AI researchers">
               </div>
               <div class="form-group form-full">
-                <label for="j-preferred">Preferred journals (optional)</label>
+                <label for="j-preferred" id="lbl-preferred">Preferred journals (optional)</label>
                 <input id="j-preferred" type="text" placeholder="e.g. Nature Communications, PLOS ONE">
               </div>
               <div class="form-group form-full">
-                <label for="j-avoid">Journals to avoid (optional)</label>
+                <label for="j-avoid" id="lbl-avoid">Journals to avoid (optional)</label>
                 <input id="j-avoid" type="text" placeholder="Journals to exclude from recommendations">
               </div>
             </div>
           </div>
 
           <button type="submit" class="btn btn-primary" style="margin-top:8px">
-            <span>🔍</span> Find journals &amp; check OA policy
+            <span>🔍</span> <span id="btn-journal-submit">Find journals &amp; check OA policy</span>
           </button>
         </div>
       </div>
@@ -281,19 +281,19 @@
         <div class="card-body">
           <div class="form-grid form-2col">
             <div class="form-group">
-              <label for="l-journal">Journal name <span class="req">*</span></label>
+              <label for="l-journal" id="lbl-l-journal">Journal name <span class="req">*</span></label>
               <input id="l-journal" type="text" required placeholder="e.g. Nature Communications">
             </div>
             <div class="form-group">
-              <label for="l-issn">ISSN (optional — improves accuracy)</label>
+              <label for="l-issn" id="lbl-l-issn">ISSN (optional — improves accuracy)</label>
               <input id="l-issn" type="text" placeholder="e.g. 2041-1723">
             </div>
             <div class="form-group">
-              <label for="l-publisher">Publisher (optional)</label>
+              <label for="l-publisher" id="lbl-l-publisher">Publisher (optional)</label>
               <input id="l-publisher" type="text" placeholder="e.g. Springer Nature">
             </div>
             <div class="form-group">
-              <label for="l-version">Manuscript version of interest</label>
+              <label for="l-version" id="lbl-l-version">Manuscript version of interest</label>
               <select id="l-version">
                 <option>All versions</option>
                 <option>Submitted version / preprint</option>
@@ -302,11 +302,11 @@
               </select>
             </div>
             <div class="form-group">
-              <label for="l-funder">Funder (affects rights retention)</label>
+              <label for="l-funder" id="lbl-l-funder">Funder (affects rights retention)</label>
               <input id="l-funder" type="text" placeholder="e.g. cOAlition S, ERC, NIH, Wellcome">
             </div>
             <div class="form-group">
-              <label for="l-repo">Intended deposit location</label>
+              <label for="l-repo" id="lbl-l-repo">Intended deposit location</label>
               <select id="l-repo">
                 <option>Institutional repository</option>
                 <option>Subject repository (e.g. arXiv, PMC, SSRN)</option>
@@ -317,7 +317,7 @@
               </select>
             </div>
             <div class="form-group">
-              <label for="l-licence">Intended licence</label>
+              <label for="l-licence" id="lbl-l-licence">Intended licence</label>
               <select id="l-licence">
                 <option>CC BY</option>
                 <option>CC BY-NC</option>
@@ -329,12 +329,12 @@
               </select>
             </div>
             <div class="form-group form-full">
-              <label for="l-notes">Additional context (optional)</label>
+              <label for="l-notes" id="lbl-l-notes">Additional context (optional)</label>
               <textarea id="l-notes" rows="3" placeholder="Already accepted? Already published? Embargo concerns? Funder mandate deadlines?"></textarea>
             </div>
           </div>
           <button type="submit" class="btn btn-primary" style="margin-top:8px">
-            🛡 Check Green OA policy
+            🛡 <span id="btn-license-submit">Check Green OA policy</span>
           </button>
         </div>
       </div>
@@ -355,27 +355,27 @@
         <div class="card-body">
           <div class="form-grid form-2col">
             <div class="form-group form-full">
-              <label for="r-title">Dataset title <span class="req">*</span></label>
+              <label for="r-title" id="lbl-r-title">Dataset title <span class="req">*</span></label>
               <input id="r-title" type="text" required placeholder="Descriptive title for your dataset">
             </div>
             <div class="form-group form-full">
-              <label for="r-desc">Description <span class="req">*</span></label>
+              <label for="r-desc" id="lbl-r-desc">Description <span class="req">*</span></label>
               <textarea id="r-desc" required rows="4" placeholder="What does the dataset contain, how was it collected, and what is its intended reuse?"></textarea>
             </div>
             <div class="form-group">
-              <label for="r-discipline">Discipline / domain <span class="req">*</span></label>
+              <label for="r-discipline" id="lbl-r-discipline">Discipline / domain <span class="req">*</span></label>
               <input id="r-discipline" type="text" required placeholder="e.g. genomics, climate science, engineering">
             </div>
             <div class="form-group">
-              <label for="r-datatypes">Data types <span class="req">*</span></label>
+              <label for="r-datatypes" id="lbl-r-datatypes">Data types <span class="req">*</span></label>
               <input id="r-datatypes" type="text" required placeholder="e.g. tabular, images, sequencing reads, time series">
             </div>
             <div class="form-group">
-              <label for="r-formats">File formats</label>
+              <label for="r-formats" id="lbl-r-formats">File formats</label>
               <input id="r-formats" type="text" placeholder="e.g. CSV, FASTQ, NetCDF, TIFF, HDF5">
             </div>
             <div class="form-group">
-              <label for="r-size">Approximate total size</label>
+              <label for="r-size" id="lbl-r-size">Approximate total size</label>
               <input id="r-size" type="text" placeholder="e.g. 250 MB / 5 GB / 2 TB">
             </div>
           </div>
@@ -384,7 +384,7 @@
             <div class="section-label">Sensitivity &amp; access</div>
             <div class="form-grid form-2col">
               <div class="form-group">
-                <label for="r-sensitivity">Sensitivity classification</label>
+                <label for="r-sensitivity" id="lbl-r-sensitivity">Sensitivity classification</label>
                 <select id="r-sensitivity">
                   <option>Open</option>
                   <option>Restricted</option>
@@ -393,7 +393,7 @@
                 </select>
               </div>
               <div class="form-group">
-                <label for="r-personal">Contains personal / health data?</label>
+                <label for="r-personal" id="lbl-r-personal">Contains personal / health data?</label>
                 <select id="r-personal">
                   <option>No</option>
                   <option>Yes — anonymised</option>
@@ -403,7 +403,7 @@
                 </select>
               </div>
               <div class="form-group">
-                <label for="r-licence">Intended licence</label>
+                <label for="r-licence" id="lbl-r-licence">Intended licence</label>
                 <select id="r-licence">
                   <option>CC BY</option>
                   <option>CC0</option>
@@ -415,7 +415,7 @@
                 </select>
               </div>
               <div class="form-group">
-                <label for="r-embargo">Embargo required?</label>
+                <label for="r-embargo" id="lbl-r-embargo">Embargo required?</label>
                 <select id="r-embargo">
                   <option>No</option>
                   <option>Yes — short (6 months)</option>
@@ -424,7 +424,7 @@
                 </select>
               </div>
               <div class="form-group">
-                <label for="r-doi">Persistent identifier (DOI) required?</label>
+                <label for="r-doi" id="lbl-r-doi">Persistent identifier (DOI) required?</label>
                 <select id="r-doi">
                   <option>Yes</option>
                   <option>No</option>
@@ -432,7 +432,7 @@
                 </select>
               </div>
               <div class="form-group">
-                <label for="r-versioning">Versioning required?</label>
+                <label for="r-versioning" id="lbl-r-versioning">Versioning required?</label>
                 <select id="r-versioning">
                   <option>Yes</option>
                   <option>No</option>
@@ -446,34 +446,34 @@
             <div class="section-label">Context</div>
             <div class="form-grid form-2col">
               <div class="form-group">
-                <label for="r-funder">Funder</label>
+                <label for="r-funder" id="lbl-r-funder">Funder</label>
                 <input id="r-funder" type="text" placeholder="e.g. Horizon Europe, NIH, ERC, ADEK">
               </div>
               <div class="form-group">
-                <label for="r-institution">Institution</label>
+                <label for="r-institution" id="lbl-r-institution">Institution</label>
                 <input id="r-institution" type="text" placeholder="e.g. Khalifa University">
               </div>
               <div class="form-group">
-                <label for="r-country">Country / region</label>
+                <label for="r-country" id="lbl-r-country">Country / region</label>
                 <input id="r-country" type="text" placeholder="e.g. UAE">
               </div>
               <div class="form-group">
-                <label for="r-preferred">Preferred / required repository (optional)</label>
+                <label for="r-preferred" id="lbl-r-preferred">Preferred / required repository (optional)</label>
                 <input id="r-preferred" type="text" placeholder="e.g. Zenodo, GenBank">
               </div>
               <div class="form-group form-full">
-                <label for="r-publication">Linked publication / DOI (optional)</label>
+                <label for="r-publication" id="lbl-r-publication">Linked publication / DOI (optional)</label>
                 <input id="r-publication" type="text" placeholder="Related article DOI or title">
               </div>
               <div class="form-group form-full">
-                <label for="r-notes">Additional notes</label>
+                <label for="r-notes" id="lbl-r-notes">Additional notes</label>
                 <textarea id="r-notes" rows="3" placeholder="Any special requirements, funder mandates, or context..."></textarea>
               </div>
             </div>
           </div>
 
           <button type="submit" class="btn btn-primary" style="margin-top:8px">
-            🗄 Find best repositories
+            🗄 <span id="btn-repo-submit">Find best repositories</span>
           </button>
         </div>
       </div>
