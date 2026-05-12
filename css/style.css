@@ -659,3 +659,16 @@ textarea { resize: vertical; min-height: 90px; }
   border-radius: 0 12px 12px 12px; padding: 8px 14px;
   font-size: 13px; color: var(--primary); font-weight: 500;
 }
+
+/* ── Language toggle ────────────────────────────────────────────────────── */
+.lang-btn {
+  padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,.25);
+  background: transparent; color: rgba(255,255,255,.75); font-size: 12px;
+  cursor: pointer; transition: all .2s; font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+}
+.lang-btn.active { background: white; color: var(--primary); border-color: white; }
+.lang-btn:hover:not(.active) { background: rgba(255,255,255,.15); color: white; }
+
+/* Accordion arrow rotation */
+.acc-arrow.open { transform: rotate(180deg) !important; }
