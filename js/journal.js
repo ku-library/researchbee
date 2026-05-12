@@ -128,7 +128,6 @@ function renderJournalCard(j, idx) {
         ${policyNotes ? `<div class="policy-notes">${policyNotes}</div>` : ""}
         ${renderSubmissionChecklist(j.submission_checklist)}
         ${renderCoverLetterBtn(j, window._lastManuscript)}
-        <div id="cover-letter-${j.issn || j.name?.replace(/\s/g,'')}"></div>
         ${renderOpenAlexMetrics(j.openalex)}
         ${renderVerifyLinks(j.verify_links)}
       </div>
