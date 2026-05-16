@@ -1,4 +1,4 @@
-// app.js - tab router, model selector, progress indicator
+// app.js - tab router, model selector, progress indicator, chat widget
 import { journalTab, subjectTab } from "./journal.js";
 import { licenseTab }    from "./license.js";
 import { repositoryTab } from "./repository.js";
@@ -18,17 +18,13 @@ window.switchMode = switchMode;
 
 // ── Tab routing ────────────────────────────────────────────────────────────
 function activateTab(target) {
-  // Deactivate all tab buttons
   document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-  // Hide all tab panels
   document.querySelectorAll(".tab-panel").forEach(p => {
     p.classList.remove("active");
     p.style.display = "none";
   });
-  // Activate chosen tab button
   const btn = document.querySelector(`.tab-btn[data-tab="${target}"]`);
   if (btn) btn.classList.add("active");
-  // Show chosen tab panel
   const panel = document.getElementById(`tab-${target}`);
   if (panel) {
     panel.classList.add("active");
@@ -36,17 +32,14 @@ function activateTab(target) {
   }
 }
 
-// Wire up tab buttons
 document.querySelectorAll(".tab-btn").forEach(btn => {
   btn.addEventListener("click", () => activateTab(btn.dataset.tab));
 });
 
-// Initialise - show journals tab by default
 activateTab("journals");
 
 // ── Language selector + UI translation ───────────────────────────────────
 const TRANSLATIONS = {
-  // Tab 1 - Journal submission
   "lbl-title":          { en: "Title",                    ar: "العنوان" },
   "lbl-abstract":       { en: "Abstract",                 ar: "الملخص" },
   "lbl-keywords":       { en: "Keywords (comma-separated)", ar: "الكلمات المفتاحية (مفصولة بفاصلة)" },
@@ -66,10 +59,8 @@ const TRANSLATIONS = {
   "lbl-preferred":      { en: "Preferred journals (optional)", ar: "المجلات المفضلة (اختياري)" },
   "lbl-avoid":          { en: "Journals to avoid (optional)", ar: "المجلات المراد تجنبها (اختياري)" },
   "btn-journal-submit": { en: "Find journals & check OA policy", ar: "ابحث عن مجلات وتحقق من سياسة الوصول المفتوح" },
-  // Tab 1 - Subject browse
   "lbl-subject":        { en: "Subject / discipline",     ar: "الموضوع / التخصص" },
   "btn-subject-submit": { en: "Search journals",          ar: "ابحث عن مجلات" },
-  // Tab 2 - License checking
   "lbl-l-journal":      { en: "Journal name",             ar: "اسم المجلة" },
   "lbl-l-issn":         { en: "ISSN (optional)",          ar: "الرقم الدولي ISSN (اختياري)" },
   "lbl-l-publisher":    { en: "Publisher (optional)",     ar: "الناشر (اختياري)" },
@@ -79,7 +70,6 @@ const TRANSLATIONS = {
   "lbl-l-licence":      { en: "Intended licence",         ar: "الرخصة المقصودة" },
   "lbl-l-notes":        { en: "Additional context (optional)", ar: "سياق إضافي (اختياري)" },
   "btn-license-submit": { en: "Check Green OA policy",    ar: "تحقق من سياسة الوصول المفتوح الأخضر" },
-  // Tab 3 - Data repository
   "lbl-r-title":        { en: "Dataset title",            ar: "عنوان مجموعة البيانات" },
   "lbl-r-desc":         { en: "Description",              ar: "الوصف" },
   "lbl-r-discipline":   { en: "Discipline / domain",      ar: "التخصص / المجال" },
@@ -137,19 +127,16 @@ const PLACEHOLDERS = {
 function applyLanguage(lang) {
   const isAr = lang === "arabic";
 
-  // Translate labels
   Object.entries(TRANSLATIONS).forEach(([id, t]) => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = (isAr ? t.ar : t.en) + (el.innerHTML.includes('class="req"') ? ' <span class="req">*</span>' : '');
   });
 
-  // Translate placeholders
   Object.entries(PLACEHOLDERS).forEach(([id, t]) => {
     const el = document.getElementById(id);
     if (el) el.placeholder = isAr ? t.ar : t.en;
   });
 
-  // Show/hide Arabic instruction banner
   let banner = document.getElementById("ar-instruction-banner");
   if (isAr) {
     if (!banner) {
@@ -168,11 +155,15 @@ function applyLanguage(lang) {
     banner.style.display = "none";
   }
 
-  // RTL direction on inputs only (not full page)
   document.querySelectorAll("input[type=text], textarea").forEach(el => {
+    // Don't apply RTL to the chat input
+    if (el.id === "rb-chat-input") return;
     el.style.direction = isAr ? "rtl" : "ltr";
     el.style.textAlign = isAr ? "right" : "left";
   });
+
+  // Notify chat widget of language change
+  window._rbChatLang = lang;
 }
 
 document.querySelectorAll(".lang-btn").forEach(btn => {
@@ -191,9 +182,11 @@ document.querySelectorAll(".model-btn").forEach(btn => {
     const hint = document.getElementById("model-hint");
     if (hint) {
       hint.textContent = btn.dataset.model === "gpt-4o"
-        ? "Deeper analysis . slower . higher cost"
-        : "Default . faster . lower cost";
+        ? "Deeper analysis · slower · higher cost"
+        : "Default · faster · lower cost";
     }
+    // Notify chat widget of model change
+    window._rbChatModel = btn.dataset.model;
   });
 });
 
@@ -239,7 +232,222 @@ export function hideProgress(containerId) {
   document.getElementById(containerId)?.classList.remove("show");
 }
 
-// ── Init ───────────────────────────────────────────────────────────────────
+// ── Clipboard helper (used by journal.js subject browse rows) ─────────────
+window.copyToClipboard = function(text, el) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = el.innerHTML;
+    el.innerHTML = "Copied!";
+    setTimeout(() => { el.innerHTML = orig; }, 1500);
+  });
+};
+
+// ── Chat widget ────────────────────────────────────────────────────────────
+(function initChat() {
+  const API_BASE  = "https://nikeshn-researchbee.hf.space";
+  const MAX_HIST  = 20;
+
+  const STARTERS = [
+    "Can I post my preprint to arXiv before submitting to Elsevier?",
+    "What's the difference between Green OA and Gold OA?",
+    "Which repository should I use for genomics data?",
+    "How do I deposit my accepted manuscript to Khazna?",
+  ];
+
+  const WELCOME = "Hi! I'm ResearchBee 🐝 — KU Library's AI publishing assistant.\n\nI can help with journal selection, Open Access self-archiving rights, and research data deposit. For detailed structured analysis, use the tools above.\n\nWhat would you like to know?";
+
+  // ── State
+  let isOpen   = false;
+  let isTyping = false;
+  let history  = [];
+
+  // ── DOM refs
+  const panel    = document.getElementById("rb-chat-panel");
+  const launcher = document.getElementById("rb-chat-launcher");
+  const closeBtn = document.getElementById("rb-chat-close");
+  const msgs     = document.getElementById("rb-chat-messages");
+  const input    = document.getElementById("rb-chat-input");
+  const sendBtn  = document.getElementById("rb-chat-send");
+  const badge    = document.getElementById("rb-chat-badge");
+  const tooltip  = document.getElementById("rb-chat-tooltip");
+
+  // Abort if widget HTML not present (e.g. old index.html)
+  if (!panel || !launcher) return;
+
+  // ── Helpers
+  function getModel() {
+    return window._rbChatModel
+      || document.querySelector(".model-btn.active")?.dataset.model
+      || "gpt-4o-mini";
+  }
+
+  function getLang() {
+    return window._rbChatLang
+      || document.querySelector(".lang-btn.active")?.dataset.lang
+      || "english";
+  }
+
+  function esc(str) {
+    return String(str || "")
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  function scrollBottom() {
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function addMessage(role, text) {
+    // Remove starter buttons once conversation starts
+    msgs.querySelector(".rb-starters-wrap")?.remove();
+
+    const wrap   = document.createElement("div");
+    wrap.className = `rb-msg ${role}`;
+
+    const bubble = document.createElement("div");
+    bubble.className = "rb-bubble";
+    bubble.innerHTML = esc(text)
+      .replace(/\n/g, "<br>")
+      .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+
+    wrap.appendChild(bubble);
+    msgs.appendChild(wrap);
+    scrollBottom();
+  }
+
+  function showTyping() {
+    const wrap = document.createElement("div");
+    wrap.className = "rb-msg assistant";
+    wrap.id = "rb-typing-indicator";
+    wrap.innerHTML = '<div class="rb-typing"><span></span><span></span><span></span></div>';
+    msgs.appendChild(wrap);
+    scrollBottom();
+  }
+
+  function removeTyping() {
+    document.getElementById("rb-typing-indicator")?.remove();
+  }
+
+  function showStarters() {
+    const wrap = document.createElement("div");
+    wrap.className = "rb-starters-wrap";
+    const list = document.createElement("div");
+    list.className = "rb-starters";
+    STARTERS.forEach(q => {
+      const btn = document.createElement("button");
+      btn.className = "rb-starter-btn";
+      btn.textContent = q;
+      btn.addEventListener("click", () => {
+        input.value = q;
+        sendMessage();
+      });
+      list.appendChild(btn);
+    });
+    wrap.appendChild(list);
+    msgs.appendChild(wrap);
+    scrollBottom();
+  }
+
+  // ── Open / close
+  function openPanel() {
+    isOpen = true;
+    panel.classList.add("open");
+    badge.classList.remove("visible");
+    tooltip.classList.remove("show");
+    input.focus();
+    if (history.length === 0) {
+      addMessage("assistant", WELCOME);
+      showStarters();
+    }
+  }
+
+  function closePanel() {
+    isOpen = false;
+    panel.classList.remove("open");
+  }
+
+  launcher.addEventListener("click", () => isOpen ? closePanel() : openPanel());
+  closeBtn.addEventListener("click", closePanel);
+
+  document.addEventListener("click", (e) => {
+    if (isOpen && !panel.contains(e.target) && !launcher.contains(e.target)) {
+      closePanel();
+    }
+  });
+
+  // ── Input behaviour
+  input.addEventListener("input", () => {
+    input.style.height = "auto";
+    input.style.height = Math.min(input.scrollHeight, 100) + "px";
+    sendBtn.disabled = !input.value.trim() || isTyping;
+  });
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      if (!sendBtn.disabled) sendMessage();
+    }
+  });
+
+  sendBtn.addEventListener("click", sendMessage);
+
+  // ── Send
+  async function sendMessage() {
+    const text = input.value.trim();
+    if (!text || isTyping) return;
+
+    input.value = "";
+    input.style.height = "auto";
+    sendBtn.disabled = true;
+    isTyping = true;
+
+    addMessage("user", text);
+    history.push({ role: "user", content: text });
+    if (history.length > MAX_HIST) history = history.slice(-MAX_HIST);
+
+    showTyping();
+
+    try {
+      const res = await fetch(`${API_BASE}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: history,
+          model:    getModel(),
+          language: getLang(),
+        }),
+      });
+
+      removeTyping();
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const data  = await res.json();
+      const reply = data.reply || "Sorry, I didn't get a response. Please try again.";
+
+      addMessage("assistant", reply);
+      history.push({ role: "assistant", content: reply });
+      if (history.length > MAX_HIST) history = history.slice(-MAX_HIST);
+
+    } catch (err) {
+      removeTyping();
+      addMessage("assistant", "⚠️ Something went wrong connecting to ResearchBee. Please try again in a moment.");
+      console.error("[ResearchBee chat]", err);
+    }
+
+    isTyping = false;
+    sendBtn.disabled = !input.value.trim();
+  }
+
+  // ── Tooltip on first load
+  setTimeout(() => {
+    tooltip.classList.add("show");
+    badge.classList.add("visible");
+    setTimeout(() => tooltip.classList.remove("show"), 4000);
+  }, 2500);
+
+})();
+
+// ── Init tabs ──────────────────────────────────────────────────────────────
 journalTab();
 subjectTab();
 licenseTab();
