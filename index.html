@@ -7,6 +7,352 @@
   <meta name="description" content="Find the right journal. Check your rights. Deposit to the right repository. AI-powered publishing and repository assistant for KU researchers.">
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="assets/researchbeemascot.png">
+
+  <!-- ── Chat Widget Styles ─────────────────────────────────────────── -->
+  <style>
+    /* ── Launcher bubble ── */
+    #rb-chat-launcher {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      z-index: 1000;
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4338CA 0%, #1a2744 100%);
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(67,56,202,0.45), 0 1px 4px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      outline: none;
+    }
+    #rb-chat-launcher:hover {
+      transform: scale(1.08);
+      box-shadow: 0 6px 28px rgba(67,56,202,0.55), 0 2px 6px rgba(0,0,0,0.25);
+    }
+    #rb-chat-launcher:active { transform: scale(0.97); }
+
+    #rb-chat-launcher img {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      object-fit: cover;
+      display: block;
+    }
+    /* unread badge */
+    #rb-chat-badge {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 14px;
+      height: 14px;
+      background: #F59E0B;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      display: none;
+    }
+    #rb-chat-badge.visible { display: block; }
+
+    /* tooltip on first load */
+    #rb-chat-tooltip {
+      position: fixed;
+      bottom: 96px;
+      right: 28px;
+      z-index: 999;
+      background: #1a2744;
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      padding: 8px 14px;
+      border-radius: 10px;
+      white-space: nowrap;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    #rb-chat-tooltip::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      right: 22px;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 6px solid #1a2744;
+    }
+    #rb-chat-tooltip.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── Chat panel ── */
+    #rb-chat-panel {
+      position: fixed;
+      bottom: 98px;
+      right: 28px;
+      z-index: 999;
+      width: 370px;
+      max-height: 540px;
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 12px 48px rgba(26,39,68,0.18), 0 2px 8px rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transform: scale(0.92) translateY(12px);
+      transform-origin: bottom right;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease, transform 0.22s ease;
+    }
+    #rb-chat-panel.open {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+      pointer-events: all;
+    }
+
+    /* panel header */
+    .rb-chat-header {
+      background: linear-gradient(135deg, #1a2744 0%, #2d3f6b 100%);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .rb-chat-header img {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.25);
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+    .rb-chat-header-text { flex: 1; min-width: 0; }
+    .rb-chat-header-name {
+      font-family: 'DM Serif Display', serif;
+      font-size: 15px;
+      color: #fff;
+      display: block;
+      line-height: 1.2;
+    }
+    .rb-chat-header-sub {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px;
+      color: rgba(255,255,255,0.6);
+    }
+    .rb-chat-status {
+      width: 8px;
+      height: 8px;
+      background: #34D399;
+      border-radius: 50%;
+      box-shadow: 0 0 0 2px rgba(52,211,153,0.3);
+      flex-shrink: 0;
+    }
+    .rb-chat-close {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.6);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 6px;
+      font-size: 18px;
+      line-height: 1;
+      transition: color 0.15s;
+      flex-shrink: 0;
+    }
+    .rb-chat-close:hover { color: #fff; }
+
+    /* disclaimer strip */
+    .rb-chat-disclaimer {
+      background: #FEF9C3;
+      border-bottom: 1px solid #FDE68A;
+      padding: 6px 14px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px;
+      color: #92400E;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    /* messages area */
+    #rb-chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 14px 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      scroll-behavior: smooth;
+    }
+    #rb-chat-messages::-webkit-scrollbar { width: 4px; }
+    #rb-chat-messages::-webkit-scrollbar-track { background: transparent; }
+    #rb-chat-messages::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
+
+    /* message bubbles */
+    .rb-msg {
+      display: flex;
+      flex-direction: column;
+      max-width: 88%;
+      animation: rb-msg-in 0.18s ease;
+    }
+    @keyframes rb-msg-in {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .rb-msg.user { align-self: flex-end; align-items: flex-end; }
+    .rb-msg.assistant { align-self: flex-start; align-items: flex-start; }
+
+    .rb-bubble {
+      padding: 9px 13px;
+      border-radius: 14px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13.5px;
+      line-height: 1.55;
+      word-break: break-word;
+    }
+    .rb-msg.user .rb-bubble {
+      background: linear-gradient(135deg, #4338CA, #3730a3);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+    .rb-msg.assistant .rb-bubble {
+      background: #F1F5F9;
+      color: #1e293b;
+      border-bottom-left-radius: 4px;
+    }
+    /* links inside assistant bubbles */
+    .rb-msg.assistant .rb-bubble a {
+      color: #4338CA;
+      text-decoration: underline;
+    }
+
+    /* typing indicator */
+    .rb-typing {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 10px 14px;
+      background: #F1F5F9;
+      border-radius: 14px;
+      border-bottom-left-radius: 4px;
+      width: fit-content;
+    }
+    .rb-typing span {
+      width: 7px;
+      height: 7px;
+      background: #94a3b8;
+      border-radius: 50%;
+      display: inline-block;
+      animation: rb-bounce 1.2s infinite ease-in-out;
+    }
+    .rb-typing span:nth-child(2) { animation-delay: 0.15s; }
+    .rb-typing span:nth-child(3) { animation-delay: 0.30s; }
+    @keyframes rb-bounce {
+      0%, 80%, 100% { transform: translateY(0); }
+      40%            { transform: translateY(-5px); }
+    }
+
+    /* starters */
+    .rb-starters {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    .rb-starter-btn {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12.5px;
+      color: #4338CA;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.15s, border-color 0.15s;
+      line-height: 1.4;
+    }
+    .rb-starter-btn:hover {
+      background: #EEF2FF;
+      border-color: #4338CA;
+    }
+
+    /* input area */
+    .rb-chat-input-wrap {
+      padding: 10px 12px 12px;
+      border-top: 1px solid #f1f5f9;
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+      flex-shrink: 0;
+      background: #fff;
+    }
+    #rb-chat-input {
+      flex: 1;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 9px 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13.5px;
+      resize: none;
+      outline: none;
+      line-height: 1.45;
+      max-height: 100px;
+      overflow-y: auto;
+      color: #1e293b;
+      background: #f8fafc;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    #rb-chat-input:focus {
+      border-color: #4338CA;
+      background: #fff;
+    }
+    #rb-chat-input::placeholder { color: #94a3b8; }
+
+    #rb-chat-send {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #4338CA, #3730a3);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    #rb-chat-send:hover { opacity: 0.9; }
+    #rb-chat-send:active { transform: scale(0.93); }
+    #rb-chat-send:disabled { opacity: 0.4; cursor: not-allowed; }
+    #rb-chat-send svg { display: block; }
+
+    /* powered-by footer */
+    .rb-chat-footer {
+      padding: 5px 14px 8px;
+      text-align: center;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 10.5px;
+      color: #94a3b8;
+      flex-shrink: 0;
+    }
+    .rb-chat-footer a { color: #94a3b8; text-decoration: none; }
+    .rb-chat-footer a:hover { color: #4338CA; }
+
+    /* mobile */
+    @media (max-width: 440px) {
+      #rb-chat-panel { width: calc(100vw - 32px); right: 16px; bottom: 86px; }
+      #rb-chat-launcher { right: 16px; bottom: 16px; }
+      #rb-chat-tooltip { right: 16px; }
+    }
+  </style>
 </head>
 <body>
 
@@ -501,6 +847,284 @@
   </div>
 </footer>
 
+<!-- ═══════════════════════════════════════════════════════════════════
+     CHAT WIDGET HTML
+     ═══════════════════════════════════════════════════════════════════ -->
+
+<!-- Tooltip -->
+<div id="rb-chat-tooltip">💬 Ask ResearchBee anything</div>
+
+<!-- Launcher button -->
+<button id="rb-chat-launcher" aria-label="Open ResearchBee chat" title="Chat with ResearchBee">
+  <img src="assets/researchbeemascot.png" alt="ResearchBee">
+  <span id="rb-chat-badge"></span>
+</button>
+
+<!-- Chat panel -->
+<div id="rb-chat-panel" role="dialog" aria-label="ResearchBee chat assistant">
+
+  <!-- Header -->
+  <div class="rb-chat-header">
+    <img src="assets/researchbeemascot.png" alt="ResearchBee">
+    <div class="rb-chat-header-text">
+      <span class="rb-chat-header-name">ResearchBee</span>
+      <span class="rb-chat-header-sub">KU Library Publishing Assistant</span>
+    </div>
+    <div class="rb-chat-status" title="Online"></div>
+    <button class="rb-chat-close" id="rb-chat-close" aria-label="Close chat">×</button>
+  </div>
+
+  <!-- Disclaimer -->
+  <div class="rb-chat-disclaimer">
+    ⚠️ Always verify OA policies on
+    <a href="https://openpolicyfinder.jisc.ac.uk" target="_blank" style="color:#92400E;font-weight:600;margin-left:3px">Open Policy Finder</a>
+  </div>
+
+  <!-- Messages -->
+  <div id="rb-chat-messages" aria-live="polite"></div>
+
+  <!-- Input -->
+  <div class="rb-chat-input-wrap">
+    <textarea
+      id="rb-chat-input"
+      rows="1"
+      placeholder="Ask about journals, OA rights, or data repos…"
+      aria-label="Chat message"
+      maxlength="2000"
+    ></textarea>
+    <button id="rb-chat-send" aria-label="Send message" disabled>
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M14.5 8L2 2l2.5 6L2 14l12.5-6z" fill="white"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Footer -->
+  <div class="rb-chat-footer">
+    Powered by ResearchBee · <a href="https://library.ku.ac.ae/lib" target="_blank">KU Library</a>
+  </div>
+</div>
+
+<!-- ── Existing app module ── -->
 <script type="module" src="js/app.js"></script>
+
+<!-- ── Chat Widget Script ── -->
+<script>
+(function () {
+  'use strict';
+
+  // ── Config ────────────────────────────────────────────────────────────
+  const API_BASE = 'https://nikeshn-researchbee.hf.space';
+  const MAX_HISTORY = 20; // cap stored turns
+
+  const STARTERS = [
+    '💡 Can I post my preprint to arXiv before submitting to Elsevier?',
+    '📊 What\'s the difference between Green OA and Gold OA?',
+    '🗄 Which repository should I use for genomics data?',
+    '🏛️ How do I deposit to Khazna?',
+  ];
+
+  const WELCOME = `Hi! I'm ResearchBee 🐝 — KU Library's AI publishing assistant.\n\nI can help with journal selection, Open Access self-archiving rights, and research data deposit. For detailed analysis use the tools above.\n\nWhat would you like to know?`;
+
+  // ── State ─────────────────────────────────────────────────────────────
+  let isOpen   = false;
+  let isTyping = false;
+  let history  = []; // [{role, content}]
+  let tooltipTimer = null;
+
+  // ── DOM refs ──────────────────────────────────────────────────────────
+  const panel    = document.getElementById('rb-chat-panel');
+  const launcher = document.getElementById('rb-chat-launcher');
+  const closeBtn = document.getElementById('rb-chat-close');
+  const messages = document.getElementById('rb-chat-messages');
+  const input    = document.getElementById('rb-chat-input');
+  const sendBtn  = document.getElementById('rb-chat-send');
+  const badge    = document.getElementById('rb-chat-badge');
+  const tooltip  = document.getElementById('rb-chat-tooltip');
+
+  // ── Helpers ───────────────────────────────────────────────────────────
+  function getModel() {
+    const active = document.querySelector('.model-btn.active');
+    return active ? active.dataset.model : 'gpt-4o-mini';
+  }
+
+  function getLang() {
+    const active = document.querySelector('.lang-btn.active');
+    return active ? active.dataset.lang : 'english';
+  }
+
+  function scrollBottom() {
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  function addMessage(role, text) {
+    // Remove starters if present
+    const starterEl = messages.querySelector('.rb-starters-wrap');
+    if (starterEl) starterEl.remove();
+
+    const wrap = document.createElement('div');
+    wrap.className = `rb-msg ${role}`;
+
+    const bubble = document.createElement('div');
+    bubble.className = 'rb-bubble';
+    // convert newlines to <br> and basic link detection
+    bubble.innerHTML = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\n/g, '<br>')
+      .replace(
+        /(https?:\/\/[^\s<]+)/g,
+        '<a href="$1" target="_blank" rel="noopener">$1</a>'
+      );
+
+    wrap.appendChild(bubble);
+    messages.appendChild(wrap);
+    scrollBottom();
+    return wrap;
+  }
+
+  function showTyping() {
+    const wrap = document.createElement('div');
+    wrap.className = 'rb-msg assistant';
+    wrap.id = 'rb-typing-indicator';
+    wrap.innerHTML = '<div class="rb-typing"><span></span><span></span><span></span></div>';
+    messages.appendChild(wrap);
+    scrollBottom();
+  }
+
+  function removeTyping() {
+    const el = document.getElementById('rb-typing-indicator');
+    if (el) el.remove();
+  }
+
+  function showStarters() {
+    const wrap = document.createElement('div');
+    wrap.className = 'rb-starters-wrap';
+    const list = document.createElement('div');
+    list.className = 'rb-starters';
+    STARTERS.forEach(q => {
+      const btn = document.createElement('button');
+      btn.className = 'rb-starter-btn';
+      btn.textContent = q;
+      btn.addEventListener('click', () => {
+        input.value = q.replace(/^[\u{1F300}-\u{1F9FF}]\s*/u, ''); // strip emoji prefix
+        sendMessage();
+      });
+      list.appendChild(btn);
+    });
+    wrap.appendChild(list);
+    messages.appendChild(wrap);
+    scrollBottom();
+  }
+
+  // ── Open / close ──────────────────────────────────────────────────────
+  function openPanel() {
+    isOpen = true;
+    panel.classList.add('open');
+    badge.classList.remove('visible');
+    tooltip.classList.remove('show');
+    input.focus();
+
+    // Render welcome on first open
+    if (history.length === 0) {
+      addMessage('assistant', WELCOME);
+      showStarters();
+    }
+  }
+
+  function closePanel() {
+    isOpen = false;
+    panel.classList.remove('open');
+  }
+
+  launcher.addEventListener('click', () => isOpen ? closePanel() : openPanel());
+  closeBtn.addEventListener('click', closePanel);
+
+  // Close on outside click
+  document.addEventListener('click', (e) => {
+    if (isOpen && !panel.contains(e.target) && !launcher.contains(e.target)) {
+      closePanel();
+    }
+  });
+
+  // ── Input auto-resize + send enable ───────────────────────────────────
+  input.addEventListener('input', () => {
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 100) + 'px';
+    sendBtn.disabled = !input.value.trim() || isTyping;
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (!sendBtn.disabled) sendMessage();
+    }
+  });
+
+  sendBtn.addEventListener('click', sendMessage);
+
+  // ── Send ──────────────────────────────────────────────────────────────
+  async function sendMessage() {
+    const text = input.value.trim();
+    if (!text || isTyping) return;
+
+    // UI reset
+    input.value = '';
+    input.style.height = 'auto';
+    sendBtn.disabled = true;
+    isTyping = true;
+
+    // Add user message to UI + history
+    addMessage('user', text);
+    history.push({ role: 'user', content: text });
+    if (history.length > MAX_HISTORY) history = history.slice(-MAX_HISTORY);
+
+    showTyping();
+
+    try {
+      const res = await fetch(`${API_BASE}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: history,
+          model:    getModel(),
+          language: getLang(),
+        }),
+      });
+
+      removeTyping();
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+      const reply = data.reply || 'Sorry, I didn\'t get a response. Please try again.';
+
+      addMessage('assistant', reply);
+      history.push({ role: 'assistant', content: reply });
+      if (history.length > MAX_HISTORY) history = history.slice(-MAX_HISTORY);
+
+    } catch (err) {
+      removeTyping();
+      addMessage('assistant', '⚠️ Something went wrong connecting to ResearchBee. Please try again in a moment.');
+      console.error('[ResearchBee chat]', err);
+    }
+
+    isTyping = false;
+    sendBtn.disabled = !input.value.trim();
+  }
+
+  // ── Tooltip on first load ─────────────────────────────────────────────
+  tooltipTimer = setTimeout(() => {
+    tooltip.classList.add('show');
+    badge.classList.add('visible');
+    setTimeout(() => tooltip.classList.remove('show'), 4000);
+  }, 2500);
+
+})();
+</script>
+
 </body>
 </html>
