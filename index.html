@@ -136,6 +136,113 @@
       .rb-launcher-label-main{font-size:13px}
       #rb-chat-tooltip{right:16px;bottom:120px}
     }
+    /* ── Dark tabs override ────────────────────────────────────────────────── */
+    .tabs-bar {
+      background: #1a2744 !important;
+      box-shadow: 0 2px 16px rgba(0,0,0,.3) !important;
+    }
+    .tab-btn {
+      border-bottom: 3px solid transparent !important;
+      transition: background .2s !important;
+      min-width: 0 !important;
+    }
+    .tab-btn:hover { background: rgba(255,255,255,.07) !important; }
+    .tab-icon-wrap {
+      background: rgba(255,255,255,.12) !important;
+      color: rgba(255,255,255,.8) !important;
+    }
+    .tab-label-main { color: rgba(255,255,255,.72) !important; font-size: 13px !important; }
+    .tab-label-sub  { color: rgba(255,255,255,.42) !important; }
+    .tab-btn.active { background: rgba(255,255,255,.1) !important; border-bottom-color: #F59E0B !important; }
+    .tab-btn.active .tab-label-main { color: #fff !important; }
+    .tab-btn.active .tab-label-sub  { color: rgba(255,255,255,.65) !important; }
+    .tab-btn.active .tab-icon-journal { background: #4338CA !important; color: #fff !important; }
+    .tab-btn.active .tab-icon-license { background: #059669 !important; color: #fff !important; }
+    .tab-btn.active .tab-icon-data    { background: #d97706 !important; color: #fff !important; }
+    .tab-btn:hover .tab-label-main    { color: #fff !important; }
+
+    /* ── Mobile tab fix — all 3 always visible ─────────────────────────────── */
+    @media(max-width:600px) {
+      .tabs-inner { padding: 0 !important; }
+      .tab-btn { padding: 9px 6px !important; gap: 5px !important; flex: 1 !important; }
+      .tab-icon-wrap { width: 26px !important; height: 26px !important; font-size: 13px !important; border-radius: 7px !important; flex-shrink: 0 !important; }
+      .tab-label-main { font-size: 11px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .tab-label-sub  { display: none !important; }
+    }
+    @media(max-width:360px) {
+      .tab-btn { padding: 8px 3px !important; gap: 3px !important; }
+      .tab-label-main { font-size: 10px !important; }
+      .tab-icon-wrap { width: 22px !important; height: 22px !important; font-size: 11px !important; }
+    }
+
+    /* ── Mobile chat bar (Option A) — replaces bottom pill on mobile ────────── */
+    #rb-mobile-chat-bar {
+      display: none;
+    }
+    @media(max-width:600px) {
+      /* Hide desktop launcher on mobile */
+      #rb-chat-launcher { display: none !important; }
+      #rb-chat-tooltip  { display: none !important; }
+
+      /* Show sticky top bar */
+      #rb-mobile-chat-bar {
+        display: flex;
+        position: sticky;
+        top: 0;
+        z-index: 89; /* just below tabs z-index:90 — sits below tabs when scrolled */
+        width: 100%;
+        background: linear-gradient(135deg, #4338CA 0%, #1a2744 100%);
+        align-items: center;
+        justify-content: center;
+        padding: 9px 16px;
+        gap: 10px;
+        cursor: pointer;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,.2);
+      }
+      .rb-mobile-bar-icon {
+        width: 28px; height: 28px; border-radius: 50%;
+        background: rgba(255,255,255,.15);
+        border: 1.5px solid rgba(255,255,255,.3);
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'DM Serif Display', Georgia, serif;
+        font-size: 16px; font-weight: 700; color: #fff;
+        flex-shrink: 0;
+      }
+      .rb-mobile-bar-text {
+        display: flex; flex-direction: column; align-items: flex-start; gap: 0;
+      }
+      .rb-mobile-bar-top {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 10px; font-weight: 700;
+        color: rgba(255,255,255,.65);
+        text-transform: uppercase; letter-spacing: .05em;
+        line-height: 1.2;
+      }
+      .rb-mobile-bar-main {
+        font-family: 'DM Serif Display', Georgia, serif;
+        font-size: 13px; color: #fff; line-height: 1.2;
+      }
+      .rb-mobile-bar-arrow {
+        font-size: 16px; color: rgba(255,255,255,.7);
+        margin-left: auto;
+      }
+
+      /* Chat panel on mobile — full width, positioned at top */
+      #rb-chat-panel {
+        bottom: auto !important;
+        top: 0 !important;
+        right: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        max-height: 75vh !important;
+        border-radius: 0 0 18px 18px !important;
+        transform-origin: top center !important;
+      }
+      #rb-chat-panel.open {
+        transform: scale(1) translateY(0) !important;
+      }
+    }
 
     /* ── Menu cards ── */
     .rb-menu-wrap { display: flex; flex-direction: column; gap: 7px; width: 100%; margin-top: 4px; }
@@ -400,6 +507,16 @@
     <p><a href="https://library.ku.ac.ae/lib" target="_blank">KU Library</a> · <a href="https://khazna.ku.ac.ae" target="_blank">Khazna Repository</a> · <a href="https://github.com/ku-library/researchbee" target="_blank">GitHub</a></p>
   </div>
 </footer>
+
+<!-- Mobile chat bar (sticky, below tabs, mobile only) -->
+<button id="rb-mobile-chat-bar" aria-label="Open ResearchBee chat">
+  <span class="rb-mobile-bar-icon">?</span>
+  <span class="rb-mobile-bar-text">
+    <span class="rb-mobile-bar-top">Need help?</span>
+    <span class="rb-mobile-bar-main">Chat with ResearchBee</span>
+  </span>
+  <span class="rb-mobile-bar-arrow">→</span>
+</button>
 
 <!-- Chat Widget HTML -->
 <div id="rb-chat-tooltip">💬 Ask ResearchBee anything</div>
