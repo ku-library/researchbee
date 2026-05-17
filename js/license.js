@@ -8,115 +8,154 @@ import {
 
 const HF_BASE = "https://nikeshn-researchbee.hf.space";
 
-// ── Journal name auto-lookup ──────────────────────────────────────────────
+// ── Journal name auto-lookup — multi-suggestion ──────────────────────────
 let _lookupTimer = null;
 
 function initJournalLookup() {
-  const nameInput   = document.getElementById("l-journal");
-  const issnInput   = document.getElementById("l-issn");
-  const pubInput    = document.getElementById("l-publisher");
+  const nameInput = document.getElementById("l-journal");
+  const issnInput = document.getElementById("l-issn");
+  const pubInput  = document.getElementById("l-publisher");
   if (!nameInput) return;
 
-  // Container for autofill chip + suggestion
   const chipWrap = document.createElement("div");
   chipWrap.id = "journal-lookup-wrap";
-  chipWrap.style.cssText = "margin-top:5px;min-height:20px;";
+  chipWrap.style.cssText = "margin-top:6px;";
   nameInput.parentNode.appendChild(chipWrap);
 
   nameInput.addEventListener("input", () => {
     clearTimeout(_lookupTimer);
     chipWrap.innerHTML = "";
-
     const val = nameInput.value.trim();
     if (val.length < 4) return;
-
-    // Debounce 650ms
-    _lookupTimer = setTimeout(() => runLookup(val, issnInput, pubInput, chipWrap), 650);
+    _lookupTimer = setTimeout(() => runLookup(val, nameInput, issnInput, pubInput, chipWrap), 650);
   });
 }
 
-async function runLookup(name, issnInput, pubInput, chipWrap) {
-  // Show loading indicator
-  chipWrap.innerHTML = `<span style="font-size:11px;color:var(--text-muted);font-style:italic">🔍 Looking up journal...</span>`;
+async function runLookup(name, nameInput, issnInput, pubInput, chipWrap) {
+  chipWrap.innerHTML = `<span style="font-size:11px;color:var(--text-muted);font-style:italic">🔍 Searching journal database...</span>`;
 
   try {
-    const res = await fetch(
-      `${HF_BASE}/api/lookup-journal-meta?name=${encodeURIComponent(name)}`
-    );
+    const res = await fetch(`${HF_BASE}/api/lookup-journal-meta?name=${encodeURIComponent(name)}`);
     if (!res.ok) { chipWrap.innerHTML = ""; return; }
     const data = await res.json();
 
-    // ── Layer 1 hit: ISSN + publisher found ───────────────────────────────
-    if (data.found) {
-      // Only auto-fill ISSN if field is empty or was auto-filled before
-      if (data.issn && (!issnInput.value || issnInput.dataset.autofilled === "1")) {
-        issnInput.value = data.issn;
-        issnInput.dataset.autofilled = "1";
-      }
-      if (data.publisher && (!pubInput.value || pubInput.dataset.autofilled === "1")) {
-        pubInput.value = data.publisher;
-        pubInput.dataset.autofilled = "1";
-      }
+    const suggestions    = data.suggestions    || [];
+    const llmSuggestions = data.llm_suggestions|| [];
 
-      const confIcon  = data.confidence === "high" ? "✓" : "~";
-      const confColor = data.confidence === "high" ? "var(--success)" : "var(--warning)";
-      const srcLabel  = data.source || "Database";
+    // ── SCImago/OpenAlex suggestions — fill name + ISSN + publisher ───────
+    if (suggestions.length) {
+      const items = suggestions.map((s, i) => {
+        const icon = s.confidence === "high" ? "✓" : "~";
+        const bg   = s.confidence === "high" ? "#f0fdf4" : "#fffbeb";
+        const bc   = s.confidence === "high" ? "#6ee7b7" : "#fcd34d";
+        const tc   = s.confidence === "high" ? "var(--success)" : "#92400e";
+        return `
+          <button class="lookup-suggestion-chip" data-idx="${i}" style="
+            display:flex;align-items:flex-start;gap:8px;width:100%;
+            background:${bg};border:1.5px solid ${bc};border-radius:9px;
+            padding:7px 11px;font-family:'DM Sans',sans-serif;cursor:pointer;
+            text-align:left;transition:box-shadow .15s;margin-bottom:4px;
+          "
+          onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,.1)'"
+          onmouseout="this.style.boxShadow='none'">
+            <span style="color:${tc};font-weight:700;font-size:12px;flex-shrink:0;margin-top:1px">${icon}</span>
+            <span style="flex:1;min-width:0;">
+              <span style="font-size:12.5px;font-weight:600;color:#1e293b;display:block;line-height:1.3">
+                ${esc(s.title)}
+              </span>
+              <span style="font-size:11px;color:var(--text-muted);display:flex;gap:8px;margin-top:2px;flex-wrap:wrap">
+                ${s.issn     ? `<span>ISSN: ${esc(s.issn)}</span>` : ""}
+                ${s.publisher? `<span>${esc(s.publisher)}</span>`  : ""}
+                <span style="opacity:.6">${esc(s.source)}</span>
+              </span>
+            </span>
+          </button>`;
+      }).join("");
 
       chipWrap.innerHTML = `
-        <div class="lookup-chip" style="
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:500">
+          📚 Select a journal:
+        </div>
+        ${items}
+        <button onclick="document.getElementById('journal-lookup-wrap').innerHTML=''" style="
+          background:none;border:none;font-size:11px;color:var(--text-muted);
+          cursor:pointer;padding:2px 4px;margin-top:2px;
+        ">✕ Dismiss</button>`;
+
+      // Wire click handlers
+      chipWrap.querySelectorAll(".lookup-suggestion-chip").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const idx = parseInt(btn.dataset.idx);
+          const s   = suggestions[idx];
+
+          // Fill journal name field (Option A — fills all fields)
+          nameInput.value = s.title;
+
+          // Fill ISSN + publisher from verified source
+          if (s.issn) {
+            issnInput.value = s.issn;
+            issnInput.dataset.autofilled = "1";
+          }
+          if (s.publisher) {
+            pubInput.value = s.publisher;
+            pubInput.dataset.autofilled = "1";
+          }
+
+          // Show confirmed chip
+          chipWrap.innerHTML = `
+            <div style="
+              display:inline-flex;align-items:center;gap:6px;
+              background:var(--success-light);border:1px solid #6ee7b7;
+              border-radius:8px;padding:4px 10px;font-size:11.5px;
+              color:var(--success);font-family:'DM Sans',sans-serif;
+            ">
+              <span style="font-weight:700">✓</span>
+              <span>Filled from <strong>${esc(s.source)}</strong></span>
+              <button onclick="clearAutofill()" style="
+                background:none;border:none;cursor:pointer;color:var(--success);
+                font-size:13px;padding:0 2px;opacity:.7;line-height:1;
+              " title="Clear">×</button>
+            </div>`;
+        });
+      });
+
+    // ── LLM name suggestions — fill name only, re-run lookup for ISSN ────
+    } else if (llmSuggestions.length) {
+      const items = llmSuggestions.map((s, i) => `
+        <button class="lookup-llm-chip" data-idx="${i}" style="
           display:inline-flex;align-items:center;gap:6px;
-          background:var(--success-light);border:1px solid #6ee7b7;
-          border-radius:8px;padding:4px 10px;font-size:11.5px;
-          color:var(--success);font-family:'DM Sans',sans-serif;
-        ">
-          <span style="font-weight:700">${confIcon}</span>
-          <span>
-            Auto-filled from <strong>${esc(srcLabel)}</strong>
-            ${data.title && data.title.toLowerCase() !== name.toLowerCase()
-              ? ` — matched as <em>${esc(data.title)}</em>`
-              : ""}
-          </span>
-          <button onclick="clearAutofill()" style="
-            background:none;border:none;cursor:pointer;
-            color:var(--success);font-size:13px;padding:0 2px;line-height:1;
-            opacity:.7;
-          " title="Clear auto-fill">×</button>
-        </div>`;
+          background:#fef3c7;border:1.5px solid #fcd34d;border-radius:20px;
+          padding:4px 12px;font-size:12px;color:#92400e;
+          font-family:'DM Sans',sans-serif;cursor:pointer;
+          font-weight:500;transition:background .15s;margin:2px;
+        "
+        onmouseover="this.style.background='#fde68a'"
+        onmouseout="this.style.background='#fef3c7'">
+          💡 ${esc(s.name)}
+        </button>`).join("");
 
-    // ── Layer 2: spelling suggestion from LLM ─────────────────────────────
-    } else if (data.suggestion) {
       chipWrap.innerHTML = `
-        <div class="lookup-suggestion" style="
-          display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;
-          background:var(--accent-light);border:1px solid #fcd34d;
-          border-radius:8px;padding:5px 10px;font-size:11.5px;
-          color:#92400e;font-family:'DM Sans',sans-serif;
-        ">
-          <span>💡 Did you mean: <strong>${esc(data.suggestion)}</strong>?</span>
-          <button id="accept-suggestion" style="
-            background:#92400e;color:#fff;border:none;
-            border-radius:6px;padding:3px 10px;font-size:11px;
-            font-family:'DM Sans',sans-serif;cursor:pointer;
-            font-weight:600;transition:opacity .15s;
-          ">Accept</button>
-          <button onclick="this.closest('.lookup-suggestion').remove()" style="
-            background:none;border:none;cursor:pointer;
-            color:#92400e;font-size:13px;padding:0 2px;opacity:.6;
-          ">×</button>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:5px;font-weight:500">
+          Did you mean one of these?
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px">${items}</div>
+        <div style="font-size:10.5px;color:var(--text-light);margin-top:4px">
+          ℹ️ Selecting will search for ISSN automatically
         </div>`;
 
-      // Accept button — replace name and re-run lookup
-      document.getElementById("accept-suggestion")?.addEventListener("click", () => {
-        const nameInput = document.getElementById("l-journal");
-        if (nameInput) {
-          nameInput.value = data.suggestion;
-          chipWrap.innerHTML = "";
-          runLookup(data.suggestion, issnInput, pubInput, chipWrap);
-        }
+      // Wire LLM chip clicks — fill name only, re-run Layer 1 for ISSN
+      chipWrap.querySelectorAll(".lookup-llm-chip").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const idx = parseInt(btn.dataset.idx);
+          const s   = llmSuggestions[idx];
+          nameInput.value = s.name;
+          chipWrap.innerHTML = `<span style="font-size:11px;color:var(--text-muted);font-style:italic">🔍 Looking up ISSN for ${esc(s.name)}...</span>`;
+          // Re-run Layer 1 with corrected name
+          runLookup(s.name, nameInput, issnInput, pubInput, chipWrap);
+        });
       });
 
     } else {
-      // Nothing found — clear chip
       chipWrap.innerHTML = "";
     }
 
@@ -125,7 +164,7 @@ async function runLookup(name, issnInput, pubInput, chipWrap) {
   }
 }
 
-// Clear auto-fill — lets user enter manually
+// Clear auto-fill
 window.clearAutofill = function() {
   const issnInput = document.getElementById("l-issn");
   const pubInput  = document.getElementById("l-publisher");
