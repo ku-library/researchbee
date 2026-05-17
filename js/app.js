@@ -460,7 +460,18 @@ window.copyToClipboard = function(text, el) {
     history.push({ role: "user", content: text });
     if (history.length > MAX_HIST) history = history.slice(-MAX_HIST);
 
-    showTyping();
+    // Create streaming bubble
+    msgs.querySelector(".rb-menu-wrap")?.remove();
+    const wrap   = document.createElement("div");
+    wrap.className = "rb-msg assistant";
+    const bubble = document.createElement("div");
+    bubble.className = "rb-bubble";
+    bubble.innerHTML = '<span class="rb-cursor">▌</span>';
+    wrap.appendChild(bubble);
+    msgs.appendChild(wrap);
+    scrollBottom();
+
+    let fullText = "";
 
     try {
       const res = await fetch(`${API_BASE}/api/chat`, {
@@ -469,26 +480,63 @@ window.copyToClipboard = function(text, el) {
         body: JSON.stringify({ messages: history, language: getLang() }),
       });
 
-      removeTyping();
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      const data   = await res.json();
-      const reply  = data.reply  || "Sorry, I didn't get a response. Please try again.";
-      const route  = data.route  || null;
-      const prefill= data.prefill|| {};
+      const reader  = res.body.getReader();
+      const decoder = new TextDecoder();
+      let   buffer  = "";
+      let   route   = null;
+      let   prefill = {};
 
-      addMessage("assistant", reply);
-      history.push({ role: "assistant", content: reply });
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("
+
+");
+        buffer = lines.pop(); // keep incomplete chunk
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const evt = JSON.parse(line.slice(6));
+
+            if (evt.done) {
+              // Final event — use clean reply from server
+              route   = evt.route   || null;
+              prefill = evt.prefill || {};
+              if (evt.reply) {
+                fullText = evt.reply;
+              }
+            } else if (evt.token) {
+              fullText += evt.token;
+            }
+
+            // Update bubble with current text
+            bubble.innerHTML = esc(fullText).replace(/
+/g, "<br>")
+              .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>')
+              + (evt.done ? "" : '<span class="rb-cursor">▌</span>');
+            scrollBottom();
+
+          } catch (_) { /* malformed SSE chunk — skip */ }
+        }
+      }
+
+      // Store clean reply in history
+      const cleanReply = fullText.trim();
+      history.push({ role: "assistant", content: cleanReply });
       if (history.length > MAX_HIST) history = history.slice(-MAX_HIST);
 
-      // Show routing CTA if backend signals a route
+      // Show routing CTA
       if (route && TAB_META[route]) {
         addRouteCTA(route, prefill);
       }
 
     } catch (err) {
-      removeTyping();
-      addMessage("assistant", "⚠️ Something went wrong. Please try again in a moment.");
+      bubble.innerHTML = "⚠️ Something went wrong. Please try again in a moment.";
       console.error("[ResearchBee chat]", err);
     }
 
