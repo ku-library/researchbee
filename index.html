@@ -136,7 +136,7 @@
       .rb-launcher-label-main{font-size:13px}
       #rb-chat-tooltip{right:16px;bottom:120px}
     }
-    /* ── Light bar + dark filled tabs with light text ───────────────────────── */
+    /* ── Light bar + always-bright coloured tabs, glowing border when selected ─ */
     .tabs-bar {
       background: #e8ecf2 !important;
       box-shadow: 0 2px 12px rgba(0,0,0,.1) !important;
@@ -145,54 +145,65 @@
     }
     .tabs-inner { padding: 8px 10px 0 10px !important; gap: 6px !important; align-items: flex-end !important; }
 
-    /* Base tab — each has its own dark colour always */
     .tab-btn {
       border-bottom: 3px solid transparent !important;
       border-radius: 10px 10px 0 0 !important;
-      margin: 0 !important;
-      min-width: 0 !important;
-      transition: filter .18s, transform .15s !important;
+      margin: 0 !important; min-width: 0 !important;
+      transition: filter .18s, transform .15s, box-shadow .18s !important;
       padding: 10px 14px !important;
+      outline: 2px solid transparent !important;
+      outline-offset: 0px !important;
     }
 
-    /* Inactive — dark but slightly muted (85% opacity via filter) */
-    .tab-btn[data-tab="journals"] { background: #1a2744 !important; filter: brightness(.78) !important; }
-    .tab-btn[data-tab="license"]  { background: #064e3b !important; filter: brightness(.78) !important; }
-    .tab-btn[data-tab="data"]     { background: #78350f !important; filter: brightness(.78) !important; }
+    /* All tabs always full bright colour */
+    .tab-btn[data-tab="journals"] { background: #1a2744 !important; }
+    .tab-btn[data-tab="license"]  { background: #065f46 !important; }
+    .tab-btn[data-tab="data"]     { background: #92400e !important; }
 
-    /* Hover — brighten a touch */
-    .tab-btn[data-tab="journals"]:hover { filter: brightness(.92) !important; transform: translateY(-1px) !important; }
-    .tab-btn[data-tab="license"]:hover  { filter: brightness(.92) !important; transform: translateY(-1px) !important; }
-    .tab-btn[data-tab="data"]:hover     { filter: brightness(.92) !important; transform: translateY(-1px) !important; }
+    /* Hover — slight lift */
+    .tab-btn:hover { filter: brightness(1.12) !important; transform: translateY(-1px) !important; }
 
-    /* Active — full colour, lifted, coloured bottom border */
-    .tab-btn.active[data-tab="journals"] { background: #1a2744 !important; filter: brightness(1) !important; border-bottom-color: #a5b4fc !important; transform: translateY(-2px) !important; box-shadow: 0 -2px 8px rgba(67,56,202,.2) !important; }
-    .tab-btn.active[data-tab="license"]  { background: #064e3b !important; filter: brightness(1) !important; border-bottom-color: #6ee7b7 !important; transform: translateY(-2px) !important; box-shadow: 0 -2px 8px rgba(5,150,105,.2) !important; }
-    .tab-btn.active[data-tab="data"]     { background: #78350f !important; filter: brightness(1) !important; border-bottom-color: #fcd34d !important; transform: translateY(-2px) !important; box-shadow: 0 -2px 8px rgba(217,119,6,.2) !important; }
+    /* Active — same colour, glowing border top + sides, stronger lift */
+    .tab-btn.active[data-tab="journals"] {
+      background: #1a2744 !important;
+      border-bottom-color: #a5b4fc !important;
+      transform: translateY(-3px) !important;
+      box-shadow: 0 -3px 0 2px #a5b4fc, 0 -6px 16px rgba(99,102,241,.35) !important;
+    }
+    .tab-btn.active[data-tab="license"] {
+      background: #065f46 !important;
+      border-bottom-color: #6ee7b7 !important;
+      transform: translateY(-3px) !important;
+      box-shadow: 0 -3px 0 2px #6ee7b7, 0 -6px 16px rgba(5,150,105,.35) !important;
+    }
+    .tab-btn.active[data-tab="data"] {
+      background: #92400e !important;
+      border-bottom-color: #fcd34d !important;
+      transform: translateY(-3px) !important;
+      box-shadow: 0 -3px 0 2px #fcd34d, 0 -6px 16px rgba(217,119,6,.35) !important;
+    }
 
-    /* Text — always white, brighter when active */
+    /* Text — all tabs white always */
     .tab-label-main {
       font-size: 13px !important; font-weight: 600 !important;
-      color: rgba(255,255,255,.7) !important;
+      color: rgba(255,255,255,.82) !important;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .tab-label-sub { color: rgba(255,255,255,.45) !important; font-size: 10.5px !important; }
+    .tab-label-sub { color: rgba(255,255,255,.5) !important; font-size: 10.5px !important; }
     .tab-btn.active .tab-label-main { color: #fff !important; }
-    .tab-btn.active .tab-label-sub  { color: rgba(255,255,255,.72) !important; }
-    .tab-btn:hover  .tab-label-main { color: rgba(255,255,255,.9) !important; }
+    .tab-btn.active .tab-label-sub  { color: rgba(255,255,255,.75) !important; }
+    .tab-btn:hover  .tab-label-main { color: #fff !important; }
 
-    /* Icons — semi-transparent white chip */
-    .tab-icon-wrap { background: rgba(255,255,255,.12) !important; color: rgba(255,255,255,.8) !important; }
-    .tab-btn.active .tab-icon-wrap { background: rgba(255,255,255,.2) !important; color: #fff !important; }
+    /* Icons */
+    .tab-icon-wrap { background: rgba(255,255,255,.15) !important; color: rgba(255,255,255,.85) !important; }
+    .tab-btn.active .tab-icon-wrap { background: rgba(255,255,255,.22) !important; color: #fff !important; }
 
     /* Mobile — all 3 always visible */
     @media(max-width:600px) {
       .tabs-inner { padding: 6px 6px 0 6px !important; gap: 4px !important; }
       .tab-btn { padding: 8px 6px !important; gap: 5px !important; flex: 1 !important; border-radius: 8px 8px 0 0 !important; }
-      .tab-btn[data-tab="journals"]:hover,
-      .tab-btn[data-tab="license"]:hover,
-      .tab-btn[data-tab="data"]:hover { transform: translateY(0) !important; }
-      .tab-btn.active { transform: translateY(-1px) !important; }
+      .tab-btn:hover { transform: translateY(0) !important; }
+      .tab-btn.active { transform: translateY(-2px) !important; }
       .tab-icon-wrap { width: 24px !important; height: 24px !important; font-size: 12px !important; border-radius: 6px !important; flex-shrink: 0 !important; }
       .tab-label-main { font-size: 11px !important; }
       .tab-label-sub  { display: none !important; }
@@ -202,6 +213,44 @@
       .tab-btn { padding: 7px 3px !important; gap: 3px !important; }
       .tab-label-main { font-size: 10px !important; }
       .tab-icon-wrap { width: 20px !important; height: 20px !important; font-size: 10px !important; }
+    }
+
+    /* ── Mobile slim chat bar — sticky ABOVE tabs ────────────────────────────── */
+    #rb-mobile-chat-bar { display: none; }
+    @media(max-width:600px) {
+      #rb-chat-launcher { display: none !important; }
+      #rb-chat-tooltip  { display: none !important; }
+      #rb-mobile-chat-bar {
+        display: flex !important;
+        position: sticky; top: 0; z-index: 95;
+        width: 100%;
+        background: linear-gradient(90deg, #1a2744 0%, #4338CA 100%);
+        align-items: center;
+        padding: 7px 14px; gap: 9px;
+        cursor: pointer; border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,.25);
+        font-family: 'DM Sans', sans-serif;
+      }
+      .rb-mobile-bar-icon {
+        width: 26px; height: 26px; border-radius: 50%;
+        background: rgba(255,255,255,.15);
+        border: 1.5px solid rgba(255,255,255,.35);
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'DM Serif Display', Georgia, serif;
+        font-size: 15px; font-weight: 700; color: #fff; flex-shrink: 0;
+      }
+      .rb-mobile-bar-text { display: flex; align-items: baseline; gap: 5px; flex: 1; }
+      .rb-mobile-bar-top  { font-size: 11px; font-weight: 700; color: rgba(255,255,255,.6); text-transform: uppercase; letter-spacing: .05em; }
+      .rb-mobile-bar-main { font-size: 12px; font-weight: 500; color: #fff; }
+      .rb-mobile-bar-arrow { font-size: 14px; color: rgba(255,255,255,.6); margin-left: auto; flex-shrink: 0; }
+      /* Chat panel slides from top */
+      #rb-chat-panel {
+        bottom: auto !important; top: 0 !important;
+        right: 0 !important; left: 0 !important;
+        width: 100% !important; max-height: 78vh !important;
+        border-radius: 0 0 18px 18px !important;
+        transform-origin: top center !important;
+      }
     }
 
     /* ── Mobile chat slim bar — sticky below header, above tabs ─────────────── */
