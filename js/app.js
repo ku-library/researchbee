@@ -493,9 +493,7 @@ window.copyToClipboard = function(text, el) {
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("
-
-");
+        const lines = buffer.split("\n\n");
         buffer = lines.pop(); // keep incomplete chunk
 
         for (const line of lines) {
@@ -515,8 +513,7 @@ window.copyToClipboard = function(text, el) {
             }
 
             // Update bubble with current text
-            bubble.innerHTML = esc(fullText).replace(/
-/g, "<br>")
+            bubble.innerHTML = esc(fullText).replace(/\n/g, "<br>")
               .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>')
               + (evt.done ? "" : '<span class="rb-cursor">▌</span>');
             scrollBottom();
