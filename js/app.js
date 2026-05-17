@@ -420,10 +420,16 @@ window.copyToClipboard = function(text, el) {
     panel.classList.remove("open");
   }
 
+  const mobileBar = document.getElementById("rb-mobile-chat-bar");
+
   launcher.addEventListener("click", () => isOpen ? closePanel() : openPanel());
+  mobileBar?.addEventListener("click", () => isOpen ? closePanel() : openPanel());
   closeBtn.addEventListener("click", closePanel);
   document.addEventListener("click", (e) => {
-    if (isOpen && !panel.contains(e.target) && !launcher.contains(e.target)) closePanel();
+    const clickedMobileBar = mobileBar && mobileBar.contains(e.target);
+    if (isOpen && !panel.contains(e.target) && !launcher.contains(e.target) && !clickedMobileBar) {
+      closePanel();
+    }
   });
 
   input.addEventListener("input", () => {
