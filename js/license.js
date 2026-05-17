@@ -6,16 +6,157 @@ import {
   renderKhaznaCard, renderHelpCard, renderNextActions, renderMascotRow
 } from "./render.js";
 
+const HF_BASE = "https://nikeshn-researchbee.hf.space";
+
+// ── Journal name auto-lookup ──────────────────────────────────────────────
+let _lookupTimer = null;
+
+function initJournalLookup() {
+  const nameInput   = document.getElementById("l-journal");
+  const issnInput   = document.getElementById("l-issn");
+  const pubInput    = document.getElementById("l-publisher");
+  if (!nameInput) return;
+
+  // Container for autofill chip + suggestion
+  const chipWrap = document.createElement("div");
+  chipWrap.id = "journal-lookup-wrap";
+  chipWrap.style.cssText = "margin-top:5px;min-height:20px;";
+  nameInput.parentNode.appendChild(chipWrap);
+
+  nameInput.addEventListener("input", () => {
+    clearTimeout(_lookupTimer);
+    chipWrap.innerHTML = "";
+
+    const val = nameInput.value.trim();
+    if (val.length < 4) return;
+
+    // Debounce 650ms
+    _lookupTimer = setTimeout(() => runLookup(val, issnInput, pubInput, chipWrap), 650);
+  });
+}
+
+async function runLookup(name, issnInput, pubInput, chipWrap) {
+  // Show loading indicator
+  chipWrap.innerHTML = `<span style="font-size:11px;color:var(--text-muted);font-style:italic">🔍 Looking up journal...</span>`;
+
+  try {
+    const res = await fetch(
+      `${HF_BASE}/api/lookup-journal-meta?name=${encodeURIComponent(name)}`
+    );
+    if (!res.ok) { chipWrap.innerHTML = ""; return; }
+    const data = await res.json();
+
+    // ── Layer 1 hit: ISSN + publisher found ───────────────────────────────
+    if (data.found) {
+      // Only auto-fill ISSN if field is empty or was auto-filled before
+      if (data.issn && (!issnInput.value || issnInput.dataset.autofilled === "1")) {
+        issnInput.value = data.issn;
+        issnInput.dataset.autofilled = "1";
+      }
+      if (data.publisher && (!pubInput.value || pubInput.dataset.autofilled === "1")) {
+        pubInput.value = data.publisher;
+        pubInput.dataset.autofilled = "1";
+      }
+
+      const confIcon  = data.confidence === "high" ? "✓" : "~";
+      const confColor = data.confidence === "high" ? "var(--success)" : "var(--warning)";
+      const srcLabel  = data.source || "Database";
+
+      chipWrap.innerHTML = `
+        <div class="lookup-chip" style="
+          display:inline-flex;align-items:center;gap:6px;
+          background:var(--success-light);border:1px solid #6ee7b7;
+          border-radius:8px;padding:4px 10px;font-size:11.5px;
+          color:var(--success);font-family:'DM Sans',sans-serif;
+        ">
+          <span style="font-weight:700">${confIcon}</span>
+          <span>
+            Auto-filled from <strong>${esc(srcLabel)}</strong>
+            ${data.title && data.title.toLowerCase() !== name.toLowerCase()
+              ? ` — matched as <em>${esc(data.title)}</em>`
+              : ""}
+          </span>
+          <button onclick="clearAutofill()" style="
+            background:none;border:none;cursor:pointer;
+            color:var(--success);font-size:13px;padding:0 2px;line-height:1;
+            opacity:.7;
+          " title="Clear auto-fill">×</button>
+        </div>`;
+
+    // ── Layer 2: spelling suggestion from LLM ─────────────────────────────
+    } else if (data.suggestion) {
+      chipWrap.innerHTML = `
+        <div class="lookup-suggestion" style="
+          display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;
+          background:var(--accent-light);border:1px solid #fcd34d;
+          border-radius:8px;padding:5px 10px;font-size:11.5px;
+          color:#92400e;font-family:'DM Sans',sans-serif;
+        ">
+          <span>💡 Did you mean: <strong>${esc(data.suggestion)}</strong>?</span>
+          <button id="accept-suggestion" style="
+            background:#92400e;color:#fff;border:none;
+            border-radius:6px;padding:3px 10px;font-size:11px;
+            font-family:'DM Sans',sans-serif;cursor:pointer;
+            font-weight:600;transition:opacity .15s;
+          ">Accept</button>
+          <button onclick="this.closest('.lookup-suggestion').remove()" style="
+            background:none;border:none;cursor:pointer;
+            color:#92400e;font-size:13px;padding:0 2px;opacity:.6;
+          ">×</button>
+        </div>`;
+
+      // Accept button — replace name and re-run lookup
+      document.getElementById("accept-suggestion")?.addEventListener("click", () => {
+        const nameInput = document.getElementById("l-journal");
+        if (nameInput) {
+          nameInput.value = data.suggestion;
+          chipWrap.innerHTML = "";
+          runLookup(data.suggestion, issnInput, pubInput, chipWrap);
+        }
+      });
+
+    } else {
+      // Nothing found — clear chip
+      chipWrap.innerHTML = "";
+    }
+
+  } catch (e) {
+    chipWrap.innerHTML = "";
+  }
+}
+
+// Clear auto-fill — lets user enter manually
+window.clearAutofill = function() {
+  const issnInput = document.getElementById("l-issn");
+  const pubInput  = document.getElementById("l-publisher");
+  const chipWrap  = document.getElementById("journal-lookup-wrap");
+  if (issnInput) { issnInput.value = ""; delete issnInput.dataset.autofilled; }
+  if (pubInput)  { pubInput.value  = ""; delete pubInput.dataset.autofilled;  }
+  if (chipWrap)  chipWrap.innerHTML = "";
+};
+
+// ── License tab ───────────────────────────────────────────────────────────
 export function licenseTab() {
   const form    = document.getElementById("license-form");
   const results = document.getElementById("license-results");
   if (!form) return;
 
+  // Init journal lookup on load
+  initJournalLookup();
+
+  // Clear autofill flags when user manually edits ISSN or publisher
+  document.getElementById("l-issn")?.addEventListener("input", (e) => {
+    if (e.isTrusted) delete e.target.dataset.autofilled;
+  });
+  document.getElementById("l-publisher")?.addEventListener("input", (e) => {
+    if (e.isTrusted) delete e.target.dataset.autofilled;
+  });
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const submitBtn = form.querySelector(".btn-primary");
     submitBtn.disabled = true;
-    submitBtn.innerHTML = ` Checking policy...`;
+    submitBtn.innerHTML = `🔍 Checking policy...`;
     results.innerHTML = "";
     results.classList.remove("hidden");
 
@@ -28,16 +169,21 @@ export function licenseTab() {
     try {
       const license_input = getLicenseData();
       setStep("license-progress", 1);
-      const data = await callAPI("/api/check-license", { license_input, model: getModel(), language: getLanguage() });
+      const data = await callAPI("/api/check-license", {
+        license_input, model: getModel(), language: getLanguage()
+      });
       setStep("license-progress", 2);
       doneProgress("license-progress", "[OK] Policy check complete");
       setTimeout(() => renderLicenseResults(data.result, results), 400);
     } catch (err) {
       document.getElementById("license-progress").innerHTML =
-        `<div class="p-step" style="color:var(--danger)"><span class="p-dot" style="background:var(--danger)"></span><span>Error: ${esc(err.message)}</span></div>`;
+        `<div class="p-step" style="color:var(--danger)">
+           <span class="p-dot" style="background:var(--danger)"></span>
+           <span>Error: ${esc(err.message)}</span>
+         </div>`;
     } finally {
       submitBtn.disabled = false;
-      submitBtn.innerHTML = ` Check Green OA policy`;
+      submitBtn.innerHTML = `🛡 Check Green OA policy`;
     }
   });
 }
@@ -76,7 +222,7 @@ function renderPolicyCard(j) {
   return `
     <div class="card j-card">
       <div class="j-header">
-        <div class="j-meta">${esc(j.publisher || "")}${j.issn ? ` . ISSN ${esc(j.issn)}` : ""}</div>
+        <div class="j-meta">${esc(j.publisher || "")}${j.issn ? ` · ISSN ${esc(j.issn)}` : ""}</div>
         <div class="j-title">${esc(j.name)}</div>
         <div class="badge-row">
           ${oaStatusBadge(oa.policy_status || "Not confirmed")}
@@ -84,7 +230,7 @@ function renderPolicyCard(j) {
       </div>
       <div class="j-body">
         <div>
-          <h5 style="font-size:14px;font-weight:600;margin-bottom:10px"> Green OA / self-archiving by version</h5>
+          <h5 style="font-size:14px;font-weight:600;margin-bottom:10px">🟢 Green OA / self-archiving by version</h5>
           <div class="version-list">
             ${renderVersionBlock("Submitted version / preprint", oa.preprint)}
             ${renderVersionBlock("Accepted manuscript (AAM / postprint)", oa.postprint)}
@@ -101,7 +247,7 @@ function renderDepositRecommendation(r) {
   if (!r) return "";
   return `
     <div class="card rec-card mt-6">
-      <div class="card-header"><h2> Repository deposit recommendation</h2></div>
+      <div class="card-header"><h2>📦 Repository deposit recommendation</h2></div>
       <div class="card-body space-y">
         <dl class="rec-grid">
           <div class="rec-item"><dt>Best version to deposit</dt><dd>${esc(r.best_version_to_deposit)}</dd></div>
@@ -127,11 +273,10 @@ function renderLicenseResults(result, container) {
     <div class="results-header">
       <h2 class="results-title">Policy result</h2>
       <div class="results-meta">
-        <button class="btn btn-ghost" id="license-reset"> Start over</button>
+        <button class="btn btn-ghost" id="license-reset">↩ Start over</button>
       </div>
     </div>
-
-    <h3 style="font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:14px"> Green OA / self-archiving by version</h3>
+    <h3 style="font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:14px">🟢 Green OA / self-archiving by version</h3>
     ${journals.map(j => renderPolicyCard(j)).join("")}
     ${renderDepositRecommendation(result.repository_recommendation)}
     ${result.khazna ? renderKhaznaCard(result.khazna, "article") : ""}
@@ -144,6 +289,7 @@ function renderLicenseResults(result, container) {
     container.classList.add("hidden");
     document.getElementById("license-progress")?.classList.remove("show");
     document.getElementById("license-form")?.reset();
+    document.getElementById("journal-lookup-wrap") && (document.getElementById("journal-lookup-wrap").innerHTML = "");
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
 

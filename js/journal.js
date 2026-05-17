@@ -6,8 +6,11 @@ import {
   renderVersionBlock, renderVerifyLinks, renderOpenAlexMetrics,
   renderRankingBlock, renderKhaznaCard, renderHelpCard,
   renderNextActions, renderManuscriptUnderstanding, renderMascotRow,
-  renderSubmissionChecklist, renderCoverLetterBtn
+  renderSubmissionChecklist, renderCoverLetterBtn,
+  renderRelatedWorksAccordion, renderAltmetricPlaceholder, loadAltmetricBadge
 } from "./render.js";
+
+const HF_BASE = "https://nikeshn-researchbee.hf.space";
 
 export function journalTab() {
   const form    = document.getElementById("journal-form");
@@ -40,14 +43,14 @@ export function journalTab() {
       setStep("journal-progress", 3);
       const result = data.result;
       const total = (result.journals?.length || 0) + (result.extended_list?.length || 0);
-      doneProgress("journal-progress", `[OK] ${total} journals found - ${result.journals?.length || 0} detailed . ${result.extended_list?.length || 0} quick matches`);
+      doneProgress("journal-progress", `[OK] ${total} journals found - ${result.journals?.length || 0} detailed · ${result.extended_list?.length || 0} quick matches`);
       setTimeout(() => renderJournalResults(result, results), 400);
     } catch (err) {
       document.getElementById("journal-progress").innerHTML =
         `<div class="p-step" style="color:var(--danger)"><span class="p-dot" style="background:var(--danger)"></span><span>Error: ${esc(err.message)}</span></div>`;
     } finally {
       submitBtn.disabled = false;
-      submitBtn.innerHTML = `<span></span> Find journals & check OA policy`;
+      submitBtn.innerHTML = `<span>🔍</span> Find journals & check OA policy`;
     }
   });
 
@@ -93,10 +96,13 @@ function renderJournalCard(j, idx) {
     oa.risk_flag             ? `<p class="p-risk">[!] <span><strong>Risk:</strong> ${esc(oa.risk_flag)}</span></p>` : "",
   ].filter(Boolean).join("");
 
+  // Unique ID for async loaders
+  const uid = (j.issn || j.name || "").replace(/[^a-zA-Z0-9]/g, "").slice(0, 16);
+
   return `
     <div class="card j-card">
       <div class="j-header">
-        <div class="j-meta">#${idx + 1} . ${esc(j.publisher || "")}${j.issn ? ` . ISSN ${esc(j.issn)}` : ""}</div>
+        <div class="j-meta">#${idx + 1} · ${esc(j.publisher || "")}${j.issn ? ` · ISSN ${esc(j.issn)}` : ""}</div>
         <div class="j-title">${esc(j.name)}</div>
         <div class="badge-row">
           ${confidenceBadge(j.confidence)}
@@ -108,7 +114,7 @@ function renderJournalCard(j, idx) {
         <div class="detail-grid">
           <div class="detail-item"><h5>🎯 Why it fits</h5><p>${esc(j.fit_reason)}</p></div>
           <div class="detail-item"><h5>👥 Audience match</h5><p>${esc(j.audience_match)}</p></div>
-          <div class="detail-item"><h5> Submission strategy</h5><p>${esc(j.submission_strategy)}</p></div>
+          <div class="detail-item"><h5>📋 Submission strategy</h5><p>${esc(j.submission_strategy)}</p></div>
           <div class="detail-item"><h5>🔓 OA / compliance</h5><p>${esc(j.oa_compliance_note)}</p></div>
         </div>
 
@@ -117,7 +123,7 @@ function renderJournalCard(j, idx) {
         <hr class="divider">
 
         <div>
-          <h5 style="font-size:14px;font-weight:600;margin-bottom:10px"> Green OA / self-archiving by version</h5>
+          <h5 style="font-size:14px;font-weight:600;margin-bottom:10px">🟢 Green OA / self-archiving by version</h5>
           <div class="version-list">
             ${renderVersionBlock("Submitted version / preprint", oa.preprint)}
             ${renderVersionBlock("Accepted manuscript (AAM / postprint)", oa.postprint)}
@@ -129,7 +135,14 @@ function renderJournalCard(j, idx) {
         ${renderSubmissionChecklist(j.submission_checklist)}
         ${renderCoverLetterBtn(j, window._lastManuscript)}
         ${renderOpenAlexMetrics(j.openalex)}
+
+        <!-- Related works accordion — lazy loaded on click -->
+        ${renderRelatedWorksAccordion(j)}
+
         ${renderVerifyLinks(j.verify_links)}
+
+        <!-- Altmetric badge — async loaded after render -->
+        ${renderAltmetricPlaceholder(j.issn)}
       </div>
     </div>`;
 }
@@ -148,8 +161,8 @@ function renderExtendedList(list) {
         <td style="font-size:12px;color:var(--text-muted)">${esc(j.fit_reason || "")}</td>
         <td>
           <div class="ext-links">
-            ${vl.scopus  ? `<a href="${esc(vl.scopus)}"       target="_blank" class="el el-scopus"> Scopus </a>` : ""}
-            ${vl.sherpa_romeo ? `<a href="${esc(vl.sherpa_romeo)}" target="_blank" class="el el-sherpa">Open Policy Finder</a>` : ""}
+            ${vl.scopus      ? `<a href="${esc(vl.scopus)}"        target="_blank" class="el el-scopus">Scopus</a>` : ""}
+            ${vl.sherpa_romeo? `<a href="${esc(vl.sherpa_romeo)}"  target="_blank" class="el el-sherpa">Open Policy Finder</a>` : ""}
           </div>
         </td>
       </tr>`;
@@ -158,15 +171,13 @@ function renderExtendedList(list) {
   return `
     <div class="extended-wrap">
       <button class="ext-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('show')">
-        <span> Show ${list.length} more journal suggestions</span>
+        <span>📋 Show ${list.length} more journal suggestions</span>
         <span class="ext-arrow">▼</span>
       </button>
       <div class="ext-body">
         <table class="ext-table">
           <thead>
-            <tr>
-              <th>#</th><th>Journal</th><th>ISSN</th><th>Quartile</th><th>Why it fits</th><th>Verify</th>
-            </tr>
+            <tr><th>#</th><th>Journal</th><th>ISSN</th><th>Quartile</th><th>Why it fits</th><th>Verify</th></tr>
           </thead>
           <tbody>${rows}</tbody>
         </table>
@@ -178,7 +189,7 @@ function renderRepoRecommendation(r) {
   if (!r) return "";
   return `
     <div class="card rec-card mt-6">
-      <div class="card-header"><h2> Repository manager recommendation</h2></div>
+      <div class="card-header"><h2>📦 Repository manager recommendation</h2></div>
       <div class="card-body space-y">
         <dl class="rec-grid">
           <div class="rec-item"><dt>Best version to deposit</dt><dd>${esc(r.best_version_to_deposit)}</dd></div>
@@ -208,7 +219,7 @@ function renderJournalResults(result, container) {
       <h2 class="results-title">Analysis</h2>
       <div class="results-meta">
         <span class="count-chip">${total} journals found</span>
-        <button class="btn btn-ghost" id="journal-reset"> Start over</button>
+        <button class="btn btn-ghost" id="journal-reset">↩ Start over</button>
       </div>
     </div>
 
@@ -224,9 +235,11 @@ function renderJournalResults(result, container) {
     ${renderHelpCard()}
   `;
 
-  // Export buttons
+  // Wire export buttons
   document.getElementById("export-bibtex")?.addEventListener("click", () => exportCitations(result.journals, "bibtex"));
   document.getElementById("export-ris")?.addEventListener("click",    () => exportCitations(result.journals, "ris"));
+
+  // Reset button
   document.getElementById("journal-reset")?.addEventListener("click", () => {
     container.innerHTML = "";
     container.classList.add("hidden");
@@ -235,10 +248,15 @@ function renderJournalResults(result, container) {
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
 
+  // ── Load Altmetric badges async after render ───────────────────────────
+  journals.forEach(j => {
+    if (j.issn) loadAltmetricBadge(j.issn);
+  });
+
   container.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-// ── Subject browse mode (NEW - does not affect existing journalTab) ────────
+// ── Subject browse mode ────────────────────────────────────────────────────
 export function subjectTab() {
   const form    = document.getElementById("subject-form");
   const results = document.getElementById("subject-results");
@@ -265,9 +283,7 @@ export function subjectTab() {
     try {
       setStep("subject-progress", 1);
       const data = await callAPI("/api/browse-subject", {
-        subject,
-        model: getModel(),
-        language: getLanguage()
+        subject, model: getModel(), language: getLanguage()
       });
       setStep("subject-progress", 2);
       doneProgress("subject-progress",
@@ -288,7 +304,6 @@ export function subjectTab() {
     }
   });
 
-  // Reset button
   document.getElementById("subject-reset")?.addEventListener("click", resetSubject);
 }
 
@@ -302,7 +317,6 @@ function resetSubject() {
 function renderSubjectResults(result, container) {
   const journals = result.journals || [];
 
-  // Not found state
   if (result.confidence === "not_found" || !journals.length) {
     container.innerHTML = `
       <div class="subj-notfound">
@@ -316,7 +330,6 @@ function renderSubjectResults(result, container) {
     return;
   }
 
-  // User message banner (correction / near match)
   const banner = result.user_message
     ? `<div class="subj-banner">
          <span class="subj-banner-icon">${result.confidence === "near" ? "Corrected:" : "Note:"}</span>
@@ -324,7 +337,6 @@ function renderSubjectResults(result, container) {
        </div>`
     : "";
 
-  // Build table rows
   const rows = journals.map((j, i) => {
     const vl   = j.verify_links || {};
     const q    = j.quartile;
@@ -352,7 +364,7 @@ function renderSubjectResults(result, container) {
             ${vl.sherpa_romeo   ? `<a href="${esc(vl.sherpa_romeo)}"   target="_blank" class="el el-sherpa">Open Policy Finder</a>` : ""}
             ${vl.doaj           ? `<a href="${esc(vl.doaj)}"           target="_blank" class="el" style="background:#fef3c7;color:#92400e">DOAJ</a>` : ""}
             ${vl.scopus_sources ? `<a href="${esc(vl.scopus_sources)}" target="_blank" class="el" style="background:#e0e7ff;color:#3730a3">Scopus</a>` : ""}
-            ${vl.issn_display   ? `<span class="copy-chip copy-chip-sm" onclick="copyToClipboard('${esc(vl.issn_display)}',this)" title="Copy ISSN">${esc(vl.issn_display)} &#x1F4CB;</span>` : ""}
+            ${vl.issn_display   ? `<span class="copy-chip copy-chip-sm" onclick="copyToClipboard('${esc(vl.issn_display)}',this)" title="Copy ISSN">${esc(vl.issn_display)} 📋</span>` : ""}
           </div>
           <div style="display:flex;gap:6px;flex-wrap:wrap">
             <button class="el" style="background:#e0e7ff;color:#3730a3;cursor:pointer;border:none"
@@ -411,25 +423,17 @@ function renderSubjectResults(result, container) {
         <button class="btn btn-ghost" id="subject-reset-btn">Reset</button>
       </div>
     </div>
-
     ${banner}
-
     <div class="card" style="overflow:hidden;margin-bottom:20px">
       <table class="ext-table" style="width:100%">
         <thead>
           <tr>
-            <th>#</th>
-            <th>Journal</th>
-            <th>ISSN</th>
-            <th>Quartile</th>
-            <th>H-index</th>
-            <th>Verify &amp; Actions</th>
+            <th>#</th><th>Journal</th><th>ISSN</th><th>Quartile</th><th>H-index</th><th>Verify &amp; Actions</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
       </table>
     </div>
-
     <div class="subj-tip">
       <strong>Want deeper analysis?</strong>
       Switch to <em>Analyse manuscript</em> mode above for full Green OA policy,
@@ -455,9 +459,9 @@ async function exportCitations(journals, format) {
   }
 }
 
-// ── Cover letter generator ─────────────────────────────────────────────────
-window.generateCoverLetter = async function(jName, jPub, mTitle, mAbs, mType, mDisc, btn) {
-  const containerId = "cover-letter-" + jName.replace(/\s/g, "");
+// ── Cover letter generator ────────────────────────────────────────────────
+window.generateCoverLetter = async function(jName, jPub, mTitle, mAbs, mType, mDisc, uid, btn) {
+  const containerId = "cover-letter-" + uid;
   const container   = document.getElementById(containerId);
   if (!container) return;
 
@@ -467,14 +471,9 @@ window.generateCoverLetter = async function(jName, jPub, mTitle, mAbs, mType, mD
 
   try {
     const data = await callAPI("/api/cover-letter", {
-      manuscript_title: mTitle,
-      abstract:         mAbs,
-      journal_name:     jName,
-      publisher:        jPub,
-      article_type:     mType,
-      discipline:       mDisc,
-      language:         getLanguage(),
-      model:            getModel()
+      manuscript_title: mTitle, abstract: mAbs, journal_name: jName,
+      publisher: jPub, article_type: mType, discipline: mDisc,
+      language: getLanguage(), model: getModel()
     });
     const r = data.result;
     container.innerHTML = `
@@ -509,7 +508,7 @@ window.downloadCoverLetter = function(text, journalName) {
   URL.revokeObjectURL(url);
 };
 
-// ── Subject browse — cover letter form ───────────────────────────────────
+// ── Subject browse cover letter ───────────────────────────────────────────
 window.showSubjectCoverLetterForm = function(uid, jName, jPub, btn) {
   const row = document.getElementById("clform-" + uid);
   if (!row) return;
@@ -535,19 +534,12 @@ window.submitSubjectCoverLetter = async function(uid, jName, jPub, btn) {
 
   try {
     const data = await callAPI("/api/cover-letter", {
-      manuscript_title: title,
-      abstract:         abstract,
-      journal_name:     jName,
-      publisher:        jPub,
-      author_name:      author,
-      language:         getLanguage(),
-      model:            getModel()
+      manuscript_title: title, abstract, journal_name: jName,
+      publisher: jPub, author_name: author,
+      language: getLanguage(), model: getModel()
     });
     const r = data.result;
-    // Download as .txt directly
-    const full = `Subject: ${r.subject_line || ""}
-
-${r.cover_letter || ""}`;
+    const full = `Subject: ${r.subject_line || ""}\n\n${r.cover_letter || ""}`;
     const blob  = new Blob([full], { type: "text/plain" });
     const url   = URL.createObjectURL(blob);
     const a     = document.createElement("a");
@@ -565,16 +557,11 @@ ${r.cover_letter || ""}`;
   }
 };
 
-// ── Subject browse — analyse fully ───────────────────────────────────────
+// ── Analyse fully from subject browse ────────────────────────────────────
 window.analyseFullyFromSubject = function(jName, jIssn) {
-  // Pre-fill preferred journals field
   const prefField = document.getElementById("j-preferred");
   if (prefField) prefField.value = jName;
-
-  // Switch to manuscript mode
   switchMode("manuscript");
-
-  // Show a notice banner
   const form = document.getElementById("journal-form");
   if (form) {
     const existing = document.getElementById("analyse-notice");
@@ -587,7 +574,5 @@ window.analyseFullyFromSubject = function(jName, jIssn) {
       form.parentNode.insertBefore(notice, form);
     }
   }
-
-  // Scroll to form
   document.querySelector(".tabs-bar")?.scrollIntoView({ behavior: "smooth", block: "start" });
 };
