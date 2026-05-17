@@ -136,111 +136,129 @@
       .rb-launcher-label-main{font-size:13px}
       #rb-chat-tooltip{right:16px;bottom:120px}
     }
-    /* ── Dark tabs override ────────────────────────────────────────────────── */
+    /* ── Light bar + dark filled tabs with light text ───────────────────────── */
     .tabs-bar {
-      background: #1a2744 !important;
-      box-shadow: 0 2px 16px rgba(0,0,0,.3) !important;
+      background: #e8ecf2 !important;
+      box-shadow: 0 2px 12px rgba(0,0,0,.1) !important;
+      border-bottom: none !important;
+      padding-bottom: 0 !important;
     }
+    .tabs-inner { padding: 8px 10px 0 10px !important; gap: 6px !important; align-items: flex-end !important; }
+
+    /* Base tab — each has its own dark colour always */
     .tab-btn {
       border-bottom: 3px solid transparent !important;
-      transition: background .2s !important;
+      border-radius: 10px 10px 0 0 !important;
+      margin: 0 !important;
       min-width: 0 !important;
+      transition: filter .18s, transform .15s !important;
+      padding: 10px 14px !important;
     }
-    .tab-btn:hover { background: rgba(255,255,255,.07) !important; }
-    .tab-icon-wrap {
-      background: rgba(255,255,255,.12) !important;
-      color: rgba(255,255,255,.8) !important;
-    }
-    .tab-label-main { color: rgba(255,255,255,.72) !important; font-size: 13px !important; }
-    .tab-label-sub  { color: rgba(255,255,255,.42) !important; }
-    .tab-btn.active { background: rgba(255,255,255,.1) !important; border-bottom-color: #F59E0B !important; }
-    .tab-btn.active .tab-label-main { color: #fff !important; }
-    .tab-btn.active .tab-label-sub  { color: rgba(255,255,255,.65) !important; }
-    .tab-btn.active .tab-icon-journal { background: #4338CA !important; color: #fff !important; }
-    .tab-btn.active .tab-icon-license { background: #059669 !important; color: #fff !important; }
-    .tab-btn.active .tab-icon-data    { background: #d97706 !important; color: #fff !important; }
-    .tab-btn:hover .tab-label-main    { color: #fff !important; }
 
-    /* ── Mobile tab fix — all 3 always visible ─────────────────────────────── */
+    /* Inactive — dark but slightly muted (85% opacity via filter) */
+    .tab-btn[data-tab="journals"] { background: #1a2744 !important; filter: brightness(.78) !important; }
+    .tab-btn[data-tab="license"]  { background: #064e3b !important; filter: brightness(.78) !important; }
+    .tab-btn[data-tab="data"]     { background: #78350f !important; filter: brightness(.78) !important; }
+
+    /* Hover — brighten a touch */
+    .tab-btn[data-tab="journals"]:hover { filter: brightness(.92) !important; transform: translateY(-1px) !important; }
+    .tab-btn[data-tab="license"]:hover  { filter: brightness(.92) !important; transform: translateY(-1px) !important; }
+    .tab-btn[data-tab="data"]:hover     { filter: brightness(.92) !important; transform: translateY(-1px) !important; }
+
+    /* Active — full colour, lifted, coloured bottom border */
+    .tab-btn.active[data-tab="journals"] { background: #1a2744 !important; filter: brightness(1) !important; border-bottom-color: #a5b4fc !important; transform: translateY(-2px) !important; box-shadow: 0 -2px 8px rgba(67,56,202,.2) !important; }
+    .tab-btn.active[data-tab="license"]  { background: #064e3b !important; filter: brightness(1) !important; border-bottom-color: #6ee7b7 !important; transform: translateY(-2px) !important; box-shadow: 0 -2px 8px rgba(5,150,105,.2) !important; }
+    .tab-btn.active[data-tab="data"]     { background: #78350f !important; filter: brightness(1) !important; border-bottom-color: #fcd34d !important; transform: translateY(-2px) !important; box-shadow: 0 -2px 8px rgba(217,119,6,.2) !important; }
+
+    /* Text — always white, brighter when active */
+    .tab-label-main {
+      font-size: 13px !important; font-weight: 600 !important;
+      color: rgba(255,255,255,.7) !important;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .tab-label-sub { color: rgba(255,255,255,.45) !important; font-size: 10.5px !important; }
+    .tab-btn.active .tab-label-main { color: #fff !important; }
+    .tab-btn.active .tab-label-sub  { color: rgba(255,255,255,.72) !important; }
+    .tab-btn:hover  .tab-label-main { color: rgba(255,255,255,.9) !important; }
+
+    /* Icons — semi-transparent white chip */
+    .tab-icon-wrap { background: rgba(255,255,255,.12) !important; color: rgba(255,255,255,.8) !important; }
+    .tab-btn.active .tab-icon-wrap { background: rgba(255,255,255,.2) !important; color: #fff !important; }
+
+    /* Mobile — all 3 always visible */
     @media(max-width:600px) {
-      .tabs-inner { padding: 0 !important; }
-      .tab-btn { padding: 9px 6px !important; gap: 5px !important; flex: 1 !important; }
-      .tab-icon-wrap { width: 26px !important; height: 26px !important; font-size: 13px !important; border-radius: 7px !important; flex-shrink: 0 !important; }
-      .tab-label-main { font-size: 11px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .tabs-inner { padding: 6px 6px 0 6px !important; gap: 4px !important; }
+      .tab-btn { padding: 8px 6px !important; gap: 5px !important; flex: 1 !important; border-radius: 8px 8px 0 0 !important; }
+      .tab-btn[data-tab="journals"]:hover,
+      .tab-btn[data-tab="license"]:hover,
+      .tab-btn[data-tab="data"]:hover { transform: translateY(0) !important; }
+      .tab-btn.active { transform: translateY(-1px) !important; }
+      .tab-icon-wrap { width: 24px !important; height: 24px !important; font-size: 12px !important; border-radius: 6px !important; flex-shrink: 0 !important; }
+      .tab-label-main { font-size: 11px !important; }
       .tab-label-sub  { display: none !important; }
     }
     @media(max-width:360px) {
-      .tab-btn { padding: 8px 3px !important; gap: 3px !important; }
+      .tabs-inner { padding: 5px 3px 0 3px !important; gap: 3px !important; }
+      .tab-btn { padding: 7px 3px !important; gap: 3px !important; }
       .tab-label-main { font-size: 10px !important; }
-      .tab-icon-wrap { width: 22px !important; height: 22px !important; font-size: 11px !important; }
+      .tab-icon-wrap { width: 20px !important; height: 20px !important; font-size: 10px !important; }
     }
 
-    /* ── Mobile chat bar (Option A) — replaces bottom pill on mobile ────────── */
-    #rb-mobile-chat-bar {
-      display: none;
-    }
+    /* ── Mobile chat slim bar — sticky below header, above tabs ─────────────── */
+    #rb-mobile-chat-bar { display: none; }
+
     @media(max-width:600px) {
-      /* Hide desktop launcher on mobile */
+      /* Hide desktop pill launcher */
       #rb-chat-launcher { display: none !important; }
       #rb-chat-tooltip  { display: none !important; }
 
-      /* Show sticky top bar */
+      /* Slim sticky bar */
       #rb-mobile-chat-bar {
-        display: flex;
+        display: flex !important;
         position: sticky;
         top: 0;
-        z-index: 89; /* just below tabs z-index:90 — sits below tabs when scrolled */
+        z-index: 91;   /* above tabs bar z-index:90 */
         width: 100%;
-        background: linear-gradient(135deg, #4338CA 0%, #1a2744 100%);
+        background: linear-gradient(90deg, #1a2744 0%, #4338CA 100%);
         align-items: center;
-        justify-content: center;
-        padding: 9px 16px;
-        gap: 10px;
+        padding: 7px 14px;
+        gap: 9px;
         cursor: pointer;
         border: none;
-        box-shadow: 0 2px 8px rgba(0,0,0,.2);
+        box-shadow: 0 1px 6px rgba(0,0,0,.25);
+        font-family: 'DM Sans', sans-serif;
       }
       .rb-mobile-bar-icon {
-        width: 28px; height: 28px; border-radius: 50%;
+        width: 26px; height: 26px; border-radius: 50%;
         background: rgba(255,255,255,.15);
         border: 1.5px solid rgba(255,255,255,.3);
         display: flex; align-items: center; justify-content: center;
         font-family: 'DM Serif Display', Georgia, serif;
-        font-size: 16px; font-weight: 700; color: #fff;
-        flex-shrink: 0;
+        font-size: 15px; font-weight: 700; color: #fff; flex-shrink: 0;
       }
       .rb-mobile-bar-text {
-        display: flex; flex-direction: column; align-items: flex-start; gap: 0;
+        display: flex; align-items: baseline; gap: 5px; flex: 1;
       }
       .rb-mobile-bar-top {
-        font-family: 'DM Sans', sans-serif;
-        font-size: 10px; font-weight: 700;
-        color: rgba(255,255,255,.65);
+        font-size: 11px; font-weight: 700;
+        color: rgba(255,255,255,.6);
         text-transform: uppercase; letter-spacing: .05em;
-        line-height: 1.2;
       }
       .rb-mobile-bar-main {
-        font-family: 'DM Serif Display', Georgia, serif;
-        font-size: 13px; color: #fff; line-height: 1.2;
+        font-size: 12px; font-weight: 500; color: #fff;
       }
       .rb-mobile-bar-arrow {
-        font-size: 16px; color: rgba(255,255,255,.7);
-        margin-left: auto;
+        font-size: 14px; color: rgba(255,255,255,.6);
+        margin-left: auto; flex-shrink: 0;
       }
 
-      /* Chat panel on mobile — full width, positioned at top */
+      /* Chat panel — slides from top on mobile */
       #rb-chat-panel {
-        bottom: auto !important;
-        top: 0 !important;
-        right: 0 !important;
-        left: 0 !important;
-        width: 100% !important;
-        max-height: 75vh !important;
+        bottom: auto !important; top: 0 !important;
+        right: 0 !important; left: 0 !important;
+        width: 100% !important; max-height: 78vh !important;
         border-radius: 0 0 18px 18px !important;
         transform-origin: top center !important;
-      }
-      #rb-chat-panel.open {
-        transform: scale(1) translateY(0) !important;
       }
     }
 
@@ -508,14 +526,14 @@
   </div>
 </footer>
 
-<!-- Mobile chat bar (sticky, below tabs, mobile only) -->
-<button id="rb-mobile-chat-bar" aria-label="Open ResearchBee chat">
+<!-- Mobile slim chat bar — sticky above tabs, mobile only -->
+<button id="rb-mobile-chat-bar" aria-label="Need help? Chat with ResearchBee">
   <span class="rb-mobile-bar-icon">?</span>
   <span class="rb-mobile-bar-text">
     <span class="rb-mobile-bar-top">Need help?</span>
     <span class="rb-mobile-bar-main">Chat with ResearchBee</span>
   </span>
-  <span class="rb-mobile-bar-arrow">→</span>
+  <span class="rb-mobile-bar-arrow">›</span>
 </button>
 
 <!-- Chat Widget HTML -->
