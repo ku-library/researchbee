@@ -218,14 +218,30 @@ window.copyToClipboard = function(text, el) {
 (function initChat() {
   const MAX_HIST = 20;
 
-  const STARTERS = [
-    "Does KU cover my APC if I publish with Elsevier?",
-    "Can I self-archive my accepted manuscript in Khazna?",
-    "What's the difference between Gold OA and Green OA?",
-    "How do I deposit my dataset — which repository?",
-  ];
+  const WELCOME = "Hi! I'm ResearchBee 🐝 — KU Library's publishing assistant.\n\nChoose an option below, or type any question about publishing, Open Access, or research data.";
 
-  const WELCOME = "Hi! I'm ResearchBee 🐝 — KU Library's publishing assistant.\n\nI can answer questions about KU's Open Access policy, APC funding, publisher agreements, and Khazna. For journal matching, license checking, or repository finding, use the tools above — they give you much better structured results!\n\nWhat can I help you with?";
+  const MENU_CARDS = [
+    {
+      emoji: "🏆", color: "#1a2744", route: "journals", prefill: {},
+      title: "Find the best journal for my paper",
+      desc:  "AI-matched journals with rankings, OA policy & cover letter",
+    },
+    {
+      emoji: "🛡️", color: "#059669", route: "license", prefill: {},
+      title: "Deposit my article to Khazna or other repositories",
+      desc:  "Check self-archiving rights, embargo & allowed versions",
+    },
+    {
+      emoji: "🗄️", color: "#d97706", route: "data", prefill: {},
+      title: "Find the right repository for my dataset",
+      desc:  "Match your data to domain-specific & institutional repos",
+    },
+    {
+      emoji: "💬", color: "#4338CA", route: null, prefill: {},
+      title: "Other publishing questions",
+      desc:  "KU OA policy, APC funding, publisher agreements & more",
+    },
+  ];
 
   const TAB_META = {
     journals: { emoji: "📰", label: "Open Journal Submission tool", color: "#1a2744" },
@@ -261,7 +277,7 @@ window.copyToClipboard = function(text, el) {
   function scrollBottom() { msgs.scrollTop = msgs.scrollHeight; }
 
   function addMessage(role, text) {
-    msgs.querySelector(".rb-starters-wrap")?.remove();
+    msgs.querySelector(".rb-menu-wrap")?.remove();
     const wrap   = document.createElement("div");
     wrap.className = `rb-msg ${role}`;
     const bubble = document.createElement("div");
@@ -338,19 +354,51 @@ window.copyToClipboard = function(text, el) {
     document.getElementById("rb-typing-indicator")?.remove();
   }
 
-  function showStarters() {
+  function showMenuCards() {
+    // Remove any existing menu
+    msgs.querySelector(".rb-menu-wrap")?.remove();
+
     const wrap = document.createElement("div");
-    wrap.className = "rb-starters-wrap";
-    const list = document.createElement("div");
-    list.className = "rb-starters";
-    STARTERS.forEach(q => {
-      const btn = document.createElement("button");
-      btn.className = "rb-starter-btn";
-      btn.textContent = q;
-      btn.addEventListener("click", () => { input.value = q; sendMessage(); });
-      list.appendChild(btn);
+    wrap.className = "rb-menu-wrap";
+
+    MENU_CARDS.forEach(card => {
+      const item = document.createElement("button");
+      item.className = "rb-menu-card";
+      item.innerHTML = `
+        <span class="rb-menu-emoji">${card.emoji}</span>
+        <span class="rb-menu-text">
+          <span class="rb-menu-title">${card.title}</span>
+          <span class="rb-menu-desc">${card.desc}</span>
+        </span>
+        <span class="rb-menu-arrow" style="color:${card.color}">→</span>`;
+
+      item.addEventListener("click", () => {
+        if (card.route) {
+          // Direct tool routes — close panel and go to tab
+          closePanel();
+          activateTabAndPrefill(card.route, card.prefill);
+        } else {
+          // Free chat — remove menu, focus input
+          wrap.remove();
+          input.focus();
+        }
+      });
+      wrap.appendChild(item);
     });
-    wrap.appendChild(list);
+
+    // Clear button — restores menu
+    const clearBtn = document.createElement("button");
+    clearBtn.className = "rb-clear-btn";
+    clearBtn.textContent = "Clear";
+    clearBtn.addEventListener("click", () => {
+      // Clear messages and history, show fresh menu
+      msgs.innerHTML = "";
+      history = [];
+      addMessage("assistant", WELCOME);
+      showMenuCards();
+    });
+    wrap.appendChild(clearBtn);
+
     msgs.appendChild(wrap);
     scrollBottom();
   }
@@ -361,7 +409,10 @@ window.copyToClipboard = function(text, el) {
     badge.classList.remove("visible");
     tooltip.classList.remove("show");
     input.focus();
-    if (history.length === 0) { addMessage("assistant", WELCOME); showStarters(); }
+    if (history.length === 0) {
+      addMessage("assistant", WELCOME);
+      showMenuCards();
+    }
   }
 
   function closePanel() {
