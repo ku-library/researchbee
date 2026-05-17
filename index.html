@@ -311,6 +311,31 @@
       }
     }
 
+    /* ── Streaming cursor ── */
+    @keyframes rb-blink { 0%,100%{opacity:1} 50%{opacity:0} }
+    .rb-cursor { display: inline-block; animation: rb-blink .7s infinite; color: #4338CA; font-weight: 300; }
+
+    /* ── Altmetric badge ── */
+    .altmetric-wrap { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 0; border-top: 1px solid var(--border); }
+    .altmetric-label { font-size: 11px; color: var(--text-muted); }
+    .altmetric-badge { display: flex; align-items: center; gap: 8px; }
+    .altmetric-img { width: 64px; height: 64px; object-fit: contain; }
+    .altmetric-score-pill { background: #f97316; color: #fff; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; text-decoration: none; }
+    .altmetric-score-label { font-size: 12px; color: var(--text-muted); }
+    .altmetric-src { font-size: 10px; color: var(--text-light); text-decoration: none; margin-left: auto; }
+    .altmetric-src:hover { color: var(--primary); }
+
+    /* ── Related works ── */
+    .rw-loading { font-size: 12px; color: var(--text-muted); padding: 8px 0; font-style: italic; }
+    .rw-list { border-top: 1px solid var(--border); padding-top: 12px; display: flex; flex-direction: column; gap: 0; }
+    .rw-header { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+    .rw-item { padding: 9px 0; border-bottom: 1px solid #f1f5f9; }
+    .rw-item:last-of-type { border-bottom: none; }
+    .rw-title { font-size: 13px; font-weight: 500; color: var(--text); line-height: 1.4; margin-bottom: 3px; }
+    .rw-authors { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+    .rw-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 11px; color: var(--text-muted); }
+    .rw-src { font-size: 10px; color: var(--text-light); margin-top: 8px; }
+
     /* ── Menu cards ── */
     .rb-menu-wrap { display: flex; flex-direction: column; gap: 7px; width: 100%; margin-top: 4px; }
     .rb-menu-card {
