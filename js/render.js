@@ -1,6 +1,7 @@
 // render.js - shared rendering helpers
 
 const MASCOT = "assets/researchbeemascot.png";
+const _HF    = "https://nikeshn-researchbee.hf.space";
 
 export function renderMascotRow(message) {
   return `
@@ -70,18 +71,18 @@ export function renderVerifyLinks(vl, showScopusPrimary = true) {
   return `
     <div class="verify-row">
       <span class="verify-lbl">Verify on:</span>
-      ${showScopusPrimary && vl.scopus ? `<a href="${esc(vl.scopus)}" target="_blank" class="vlink vlink-scopus"> Scopus </a>` : ""}
-      ${vl.sherpa_romeo ? `<a href="${esc(vl.sherpa_romeo)}" target="_blank" class="vlink">SHERPA </a>` : ""}
-      ${!showScopusPrimary && vl.scopus ? `<a href="${esc(vl.scopus)}" target="_blank" class="vlink">Scopus </a>` : ""}
-      ${vl.doaj       ? `<a href="${esc(vl.doaj)}" target="_blank" class="vlink">DOAJ </a>` : ""}
-      ${vl.openalex   ? `<a href="${esc(vl.openalex)}" target="_blank" class="vlink">OpenAlex </a>` : ""}
+      ${showScopusPrimary && vl.scopus ? `<a href="${esc(vl.scopus)}" target="_blank" class="vlink vlink-scopus">Scopus</a>` : ""}
+      ${vl.sherpa_romeo ? `<a href="${esc(vl.sherpa_romeo)}" target="_blank" class="vlink">Open Policy Finder</a>` : ""}
+      ${!showScopusPrimary && vl.scopus ? `<a href="${esc(vl.scopus)}" target="_blank" class="vlink">Scopus</a>` : ""}
+      ${vl.doaj     ? `<a href="${esc(vl.doaj)}"     target="_blank" class="vlink">DOAJ</a>`     : ""}
+      ${vl.openalex ? `<a href="${esc(vl.openalex)}" target="_blank" class="vlink">OpenAlex</a>` : ""}
     </div>`;
 }
 
 export function renderOpenAlexMetrics(oa) {
   if (!oa) return "";
   const fmt = (n) => n != null ? Number(n).toLocaleString() : "-";
-  const tags = [oa.is_in_doaj ? ". DOAJ-listed" : "", oa.is_oa ? ". OA journal" : ""].filter(Boolean).join(" ");
+  const tags = [oa.is_in_doaj ? "· DOAJ-listed" : "", oa.is_oa ? "· OA journal" : ""].filter(Boolean).join(" ");
   return `
     <dl class="oa-metrics">
       <div class="oa-m"><dt>Works</dt><dd>${fmt(oa.works_count)}</dd></div>
@@ -96,17 +97,16 @@ export function renderRankingBlock(r) {
   if (!r) return "";
   const isConfirmed  = r.verification_status === "Confirmed";
   const isDerived    = /openalex-derived/i.test(r.verification_status || "");
-  const isUnverified = !isConfirmed && !isDerived;
   const cls = isConfirmed ? "confirmed" : isDerived ? "derived" : "unverified";
   const badge = isConfirmed
     ? `<span class="badge b-success">✓ Verified by ISSN</span>`
     : isDerived
     ? `<span class="badge b-warning">[!] OpenAlex-derived</span>`
-    : `<span class="badge b-danger">[!] Unverified - check manually</span>`;
+    : `<span class="badge b-danger">[!] Unverified — check manually</span>`;
   return `
     <div class="rank-box ${cls}">
       <div class="rank-head">
-        <h5> Journal metrics</h5>
+        <h5>📊 Journal metrics</h5>
         ${badge}
       </div>
       <dl class="rank-grid">
@@ -129,22 +129,19 @@ export function renderKhaznaCard(k, mode = "article") {
   return `
     <div class="khazna-card">
       <div class="khazna-head">
-        <span style="font-size:22px">️</span>
+        <span style="font-size:22px">🏛️</span>
         <div>
-          <h3>Khazna - KU Institutional Repository</h3>
+          <h3>Khazna — KU Institutional Repository</h3>
           <div style="font-size:12px;opacity:.8">khazna.ku.ac.ae</div>
         </div>
       </div>
       <div class="khazna-body">
         <p>${esc(k.message || tip)}</p>
-        <div class="khazna-tip">
-          <span>💡</span>
-          <span>${esc(tip)}</span>
-        </div>
+        <div class="khazna-tip"><span>💡</span><span>${esc(tip)}</span></div>
         <div class="khazna-actions">
           <a href="${esc(k.url || "https://khazna.ku.ac.ae")}" target="_blank" class="k-btn k-btn-fill">🔗 Visit Khazna</a>
           <a href="mailto:${esc(k.contact || "khazna@ku.ac.ae")}" class="k-btn k-btn-outline">✉ khazna@ku.ac.ae</a>
-          <a href="${esc(k.library_url || "https://library.ku.ac.ae/lib")}" target="_blank" class="k-btn k-btn-outline"> KU Library</a>
+          <a href="${esc(k.library_url || "https://library.ku.ac.ae/lib")}" target="_blank" class="k-btn k-btn-outline">📚 KU Library</a>
         </div>
       </div>
     </div>`;
@@ -154,7 +151,7 @@ export function renderHelpCard() {
   return `
     <div class="help-card">
       <div class="help-left">
-        <span class="help-icon"></span>
+        <span class="help-icon">📚</span>
         <div class="help-text">
           <h4>Need help? Contact KU Library</h4>
           <p>Not sure what to deposit, which version, or how? Our librarians can advise on open access, self-archiving, and research data management.</p>
@@ -173,10 +170,10 @@ export function renderRepoCard(r, idx) {
   return `
     <div class="card j-card r-card ${isKhazna ? "is-khazna" : ""}">
       <div class="j-header">
-        <div class="j-meta">#${idx + 1} . ${esc(r.type)} . ${esc(r.cost)}${isKhazna ? " . KU Institutional" : ""}</div>
+        <div class="j-meta">#${idx + 1} · ${esc(r.type)} · ${esc(r.cost)}${isKhazna ? " · KU Institutional" : ""}</div>
         <div class="j-title">
           ${esc(r.name)}
-          ${r.url ? `<a href="${esc(r.url)}" target="_blank" style="font-size:14px;font-family:'DM Sans',sans-serif;font-weight:400;color:var(--primary);margin-left:8px"> visit</a>` : ""}
+          ${r.url ? `<a href="${esc(r.url)}" target="_blank" style="font-size:14px;font-family:'DM Sans',sans-serif;font-weight:400;color:var(--primary);margin-left:8px">↗ visit</a>` : ""}
         </div>
         <div class="badge-row">
           ${confidenceBadge(r.confidence)}
@@ -186,7 +183,7 @@ export function renderRepoCard(r, idx) {
         </div>
       </div>
       <div class="j-body">
-        <p class="text-sm" style="color:var(--text-muted)">${esc(r.scope)}</p>
+        <p style="color:var(--text-muted);font-size:13px">${esc(r.scope)}</p>
         <div class="detail-grid">
           <div class="detail-item"><h5>Why it fits</h5><p>${esc(r.fit_reason)}</p></div>
           <div class="detail-item"><h5>Data types</h5><p>${esc(r.data_types_accepted)}</p></div>
@@ -206,13 +203,13 @@ export function renderRepoCard(r, idx) {
         ${!isKhazna ? `
           <div class="verify-row">
             <span class="verify-lbl">Verify on:</span>
-            ${vl.re3data    ? `<a href="${esc(vl.re3data)}"    target="_blank" class="vlink">re3data </a>` : ""}
-            ${vl.fairsharing? `<a href="${esc(vl.fairsharing)}" target="_blank" class="vlink">FAIRsharing </a>` : ""}
+            ${vl.re3data     ? `<a href="${esc(vl.re3data)}"     target="_blank" class="vlink">re3data ↗</a>` : ""}
+            ${vl.fairsharing ? `<a href="${esc(vl.fairsharing)}" target="_blank" class="vlink">FAIRsharing ↗</a>` : ""}
           </div>` : `
           <div class="verify-row">
             <span class="verify-lbl">Contact:</span>
             <a href="mailto:khazna@ku.ac.ae" class="vlink">khazna@ku.ac.ae</a>
-            <a href="https://khazna.ku.ac.ae" target="_blank" class="vlink">khazna.ku.ac.ae </a>
+            <a href="https://khazna.ku.ac.ae" target="_blank" class="vlink">khazna.ku.ac.ae ↗</a>
           </div>`}
       </div>
     </div>`;
@@ -222,7 +219,7 @@ export function renderNextActions(actions, global_notes) {
   if (!actions?.length) return "";
   return `
     <div class="card mt-6">
-      <div class="card-header"><h2>[OK] Next best actions</h2></div>
+      <div class="card-header"><h2>✅ Next best actions</h2></div>
       <div class="card-body">
         <ol class="actions-list">
           ${actions.map((a, i) => `
@@ -240,12 +237,12 @@ export function renderManuscriptUnderstanding(m) {
   if (!m) return "";
   return `
     <div class="card understanding">
-      <div class="card-header"><h2> Manuscript understanding</h2></div>
+      <div class="card-header"><h2>🧠 Manuscript understanding</h2></div>
       <div class="card-body">
         <p style="font-size:14px">${esc(m.summary)}</p>
         <div class="tag-row">
-          ${m.discipline    ? `<span class="badge b-primary">${esc(m.discipline)}</span>` : ""}
-          ${m.article_type  ? `<span class="badge b-muted">${esc(m.article_type)}</span>` : ""}
+          ${m.discipline   ? `<span class="badge b-primary">${esc(m.discipline)}</span>` : ""}
+          ${m.article_type ? `<span class="badge b-muted">${esc(m.article_type)}</span>` : ""}
         </div>
         ${m.inferred_criteria?.length ? `
           <div>
@@ -278,8 +275,8 @@ export function renderSubmissionChecklist(sc) {
   return `
     <div class="acc">
       <button class="acc-btn" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.acc-arrow').classList.toggle('open')">
-        <span>Submission checklist &amp; requirements</span>
-        <span class="acc-arrow" style="transition:transform .2s;display:inline-block">&#9662;</span>
+        <span>📋 Submission checklist &amp; requirements</span>
+        <span class="acc-arrow" style="transition:transform .2s;display:inline-block">▾</span>
       </button>
       <div class="acc-body">
         <dl class="r-specs" style="margin-bottom:12px">
@@ -308,7 +305,115 @@ export function renderCoverLetterBtn(journal, manuscript) {
   return `
     <button class="btn btn-ghost" style="margin-top:4px;font-size:13px"
       onclick="generateCoverLetter('${jName}','${jPub}','${mTitle}','${mAbs}','${mType}','${mDisc}','${uid}',this)">
-      Generate cover letter
+      ✉ Generate cover letter
     </button>
     <div id="cover-letter-${uid}"></div>`;
 }
+
+// ── Altmetric badge — async loaded after journal cards render ─────────────
+export function renderAltmetricPlaceholder(issn) {
+  if (!issn) return "";
+  const uid = issn.replace(/[^a-zA-Z0-9]/g, "");
+  return `<div id="altmetric-${uid}"></div>`;
+}
+
+export async function loadAltmetricBadge(issn) {
+  if (!issn) return;
+  const uid       = issn.replace(/[^a-zA-Z0-9]/g, "");
+  const container = document.getElementById(`altmetric-${uid}`);
+  if (!container) return;
+
+  try {
+    const r = await fetch(`${_HF}/api/altmetric?issn=${encodeURIComponent(issn)}`);
+    if (!r.ok) return;
+    const data = await r.json();
+    if (!data.score) return;
+
+    container.innerHTML = `
+      <div class="altmetric-wrap">
+        <span class="altmetric-label">Altmetric</span>
+        ${data.image
+          ? `<a href="${data.url || '#'}" target="_blank" rel="noopener">
+               <img src="${data.image}" class="altmetric-img" alt="Altmetric score ${data.score}">
+             </a>`
+          : `<a href="${data.url || '#'}" target="_blank" class="altmetric-score-pill">${data.score}</a>`}
+        <span class="altmetric-score-label">Score: <strong>${data.score}</strong></span>
+        <a href="https://www.altmetric.com/about-our-data/our-sources/"
+           target="_blank" class="altmetric-src">What is this?</a>
+      </div>`;
+  } catch (_) { /* silent fail — Altmetric is optional enrichment */ }
+}
+
+// ── Related works accordion — lazy loaded on click ────────────────────────
+export function renderRelatedWorksAccordion(journal) {
+  const sourceId = (journal.openalex || {}).openalex_id || "";
+  const issn     = journal.issn || "";
+  if (!sourceId && !issn) return "";
+
+  const uid = (issn || sourceId).replace(/[^a-zA-Z0-9]/g, "").slice(0, 16);
+  return `
+    <div class="acc" style="margin-top:0">
+      <button class="acc-btn" onclick="
+        this.nextElementSibling.classList.toggle('open');
+        this.querySelector('.acc-arrow').classList.toggle('open');
+        window._loadRelatedWorks('${uid}', '${sourceId}', '${issn}');
+      ">
+        <span>📄 View highly cited works in this journal</span>
+        <span class="acc-arrow" style="transition:transform .2s;display:inline-block">▾</span>
+      </button>
+      <div class="acc-body" id="rw-${uid}">
+        <div class="rw-loading">Click to load...</div>
+      </div>
+    </div>`;
+}
+
+// Global — called from inline onclick in renderRelatedWorksAccordion
+window._loadRelatedWorks = async function(uid, sourceId, issn) {
+  const container = document.getElementById(`rw-${uid}`);
+  if (!container || container.dataset.loaded) return;
+  container.dataset.loaded = "1";
+  container.innerHTML = `<div class="rw-loading">Loading...</div>`;
+
+  try {
+    const id = sourceId.replace("https://openalex.org/sources/", "").replace(/^S/, "");
+    if (!id) {
+      container.innerHTML = `<p style="font-size:13px;color:var(--text-muted)">No OpenAlex ID available for this journal.</p>`;
+      return;
+    }
+
+    const r = await fetch(`${_HF}/api/openalex-works?source_id=${encodeURIComponent(id)}&per_page=5`);
+    if (!r.ok) throw new Error("API error");
+
+    const data  = await r.json();
+    const works = data.works || [];
+
+    if (!works.length) {
+      container.innerHTML = `<p style="font-size:13px;color:var(--text-muted)">No works data available for this journal.</p>`;
+      return;
+    }
+
+    const rows = works.map(w => {
+      const doi    = w.doi    ? `<a href="${w.doi}" target="_blank" class="vlink" style="font-size:11px">DOI ↗</a>` : "";
+      const oaLink = w.openalex_url ? `<a href="${w.openalex_url}" target="_blank" class="vlink" style="font-size:11px">OpenAlex ↗</a>` : "";
+      const authors = (w.authors || []).slice(0, 3).join(", ");
+      return `
+        <div class="rw-item">
+          <div class="rw-title">${w.title || "Untitled"}</div>
+          ${authors ? `<div class="rw-authors">${authors}</div>` : ""}
+          <div class="rw-meta">
+            ${w.year    ? `<span>${w.year}</span>` : ""}
+            ${w.cited_by ? `<span>📊 ${w.cited_by.toLocaleString()} citations</span>` : ""}
+            ${doi} ${oaLink}
+          </div>
+        </div>`;
+    }).join("");
+
+    container.innerHTML = `
+      <div class="rw-list">
+        ${rows}
+        <div class="rw-src">Source: <a href="https://openalex.org" target="_blank" class="vlink">OpenAlex</a></div>
+      </div>`;
+  } catch (e) {
+    container.innerHTML = `<p style="font-size:13px;color:var(--text-muted)">Could not load works data.</p>`;
+  }
+};
