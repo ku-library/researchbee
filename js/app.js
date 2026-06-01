@@ -218,7 +218,7 @@ window.copyToClipboard = function(text, el) {
 (function initChat() {
   const MAX_HIST = 20;
 
-  const WELCOME = "👋 Hi! I'm ResearchBee 🐝 — KU Library's AI publishing assistant.\n\nUse the tabs above to find journals, check self-archiving rights, or find a data repository — or ask me anything about KU OA policy, APC funding, or publishing.";
+  const WELCOME = "👋 Hi! I'm ResearchBee 🐝 — Khalifa University Library's AI publishing assistant.\n\nI can answer questions about KU's Open Access policy, APC funding, publisher agreements, Khazna, and general publishing topics. For journal matching, license checking, or repository finding, use the tools in the tabs above — they give you detailed structured results!\n\nWhat can I help you with?";
 
   const EXAMPLE_CHIPS = [
     "Does KU cover my APC?",
@@ -389,37 +389,29 @@ window.copyToClipboard = function(text, el) {
     document.getElementById("rb-chips-wrap")?.remove();
   }
 
-  // showMenuCards still works — shows menu cards + chips
+  // showMenuCards — chips only on welcome, clear button
   function showMenuCards() {
     showExampleChips();
-    // Also render menu cards for direct tab navigation
-    msgs.querySelector(".rb-menu-wrap")?.remove();
-    document.getElementById("rb-chips-wrap")?.remove();
+    const existing = document.getElementById("rb-clear-wrap");
+    if (existing) return;
     const wrap = document.createElement("div");
-    wrap.className = "rb-menu-wrap";
-    MENU_CARDS.forEach(card => {
-      const item = document.createElement("button");
-      item.className = "rb-menu-card";
-      item.innerHTML = `<span class="rb-menu-emoji">${card.emoji}</span><span class="rb-menu-text"><span class="rb-menu-title">${card.title}</span><span class="rb-menu-desc">${card.desc}</span></span><span class="rb-menu-arrow" style="color:${card.color}">→</span>`;
-      item.addEventListener("click", () => {
-        if (card.route) { closePanel(); activateTabAndPrefill(card.route, card.prefill); }
-        else { wrap.remove(); removeChips(); input.focus(); }
-      });
-      wrap.appendChild(item);
-    });
+    wrap.id = "rb-clear-wrap";
+    wrap.style.cssText = "text-align:right;padding:0 14px 4px;";
     const clearBtn = document.createElement("button");
     clearBtn.className = "rb-clear-btn";
     clearBtn.textContent = "Clear";
     clearBtn.addEventListener("click", () => {
       msgs.innerHTML = ""; history = [];
+      document.getElementById("rb-clear-wrap")?.remove();
+      document.getElementById("rb-chips-wrap")?.remove();
       addMessage("assistant", WELCOME);
       showMenuCards();
     });
     wrap.appendChild(clearBtn);
-    msgs.appendChild(wrap);
+    const inputArea = panel.querySelector(".rb-chat-input-wrap");
+    if (inputArea) panel.insertBefore(wrap, inputArea);
     scrollBottom();
   }
-
 
   function openPanel() {
     isOpen = true;
