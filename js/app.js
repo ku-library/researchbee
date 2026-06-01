@@ -218,7 +218,13 @@ window.copyToClipboard = function(text, el) {
 (function initChat() {
   const MAX_HIST = 20;
 
-  const WELCOME = "Hi! I'm ResearchBee 🐝 — KU Library's publishing assistant.\n\nChoose an option below, or type any question about publishing, Open Access, or research data.";
+  const WELCOME = "👋 Hi! I'm ResearchBee 🐝 — KU Library's AI publishing assistant.\n\nUse the tabs above to find journals, check self-archiving rights, or find a data repository — or ask me anything about KU OA policy, APC funding, or publishing.";
+
+  const EXAMPLE_CHIPS = [
+    "Does KU cover my APC?",
+    "Can I self-archive my paper?",
+    "Where do I deposit my dataset?",
+  ];
 
   const MENU_CARDS = [
     {
@@ -278,6 +284,7 @@ window.copyToClipboard = function(text, el) {
 
   function addMessage(role, text) {
     msgs.querySelector(".rb-menu-wrap")?.remove();
+    document.getElementById("rb-chips-wrap")?.remove();
     const wrap   = document.createElement("div");
     wrap.className = `rb-msg ${role}`;
     const bubble = document.createElement("div");
@@ -354,54 +361,65 @@ window.copyToClipboard = function(text, el) {
     document.getElementById("rb-typing-indicator")?.remove();
   }
 
-  function showMenuCards() {
-    // Remove any existing menu
-    msgs.querySelector(".rb-menu-wrap")?.remove();
+  function showExampleChips() {
+    if (document.getElementById("rb-chips-wrap")) return;
+    const wrap = document.createElement("div");
+    wrap.id = "rb-chips-wrap";
+    wrap.style.cssText = "display:flex;flex-wrap:wrap;gap:6px;padding:4px 14px 8px;";
 
+    EXAMPLE_CHIPS.forEach(text => {
+      const chip = document.createElement("button");
+      chip.style.cssText = "background:#f1f5f9;border:1px solid #e2e8f0;border-radius:20px;padding:5px 12px;font-family:'DM Sans',sans-serif;font-size:12px;color:#475569;cursor:pointer;transition:background .15s,border-color .15s;white-space:nowrap;";
+      chip.textContent = text;
+      chip.addEventListener("mouseover", () => { chip.style.background="#e0e7ff"; chip.style.borderColor="#4338CA"; chip.style.color="#4338CA"; });
+      chip.addEventListener("mouseout",  () => { chip.style.background="#f1f5f9"; chip.style.borderColor="#e2e8f0"; chip.style.color="#475569"; });
+      chip.addEventListener("click", () => {
+        wrap.remove();
+        sendMessage(text);
+      });
+      wrap.appendChild(chip);
+    });
+
+    const inputArea = panel.querySelector(".rb-chat-input-wrap");
+    if (inputArea) panel.insertBefore(wrap, inputArea);
+    else msgs.appendChild(wrap);
+  }
+
+  function removeChips() {
+    document.getElementById("rb-chips-wrap")?.remove();
+  }
+
+  // showMenuCards still works — shows menu cards + chips
+  function showMenuCards() {
+    showExampleChips();
+    // Also render menu cards for direct tab navigation
+    msgs.querySelector(".rb-menu-wrap")?.remove();
+    document.getElementById("rb-chips-wrap")?.remove();
     const wrap = document.createElement("div");
     wrap.className = "rb-menu-wrap";
-
     MENU_CARDS.forEach(card => {
       const item = document.createElement("button");
       item.className = "rb-menu-card";
-      item.innerHTML = `
-        <span class="rb-menu-emoji">${card.emoji}</span>
-        <span class="rb-menu-text">
-          <span class="rb-menu-title">${card.title}</span>
-          <span class="rb-menu-desc">${card.desc}</span>
-        </span>
-        <span class="rb-menu-arrow" style="color:${card.color}">→</span>`;
-
+      item.innerHTML = `<span class="rb-menu-emoji">${card.emoji}</span><span class="rb-menu-text"><span class="rb-menu-title">${card.title}</span><span class="rb-menu-desc">${card.desc}</span></span><span class="rb-menu-arrow" style="color:${card.color}">→</span>`;
       item.addEventListener("click", () => {
-        if (card.route) {
-          // Direct tool routes — close panel and go to tab
-          closePanel();
-          activateTabAndPrefill(card.route, card.prefill);
-        } else {
-          // Free chat — remove menu, focus input
-          wrap.remove();
-          input.focus();
-        }
+        if (card.route) { closePanel(); activateTabAndPrefill(card.route, card.prefill); }
+        else { wrap.remove(); removeChips(); input.focus(); }
       });
       wrap.appendChild(item);
     });
-
-    // Clear button — restores menu
     const clearBtn = document.createElement("button");
     clearBtn.className = "rb-clear-btn";
     clearBtn.textContent = "Clear";
     clearBtn.addEventListener("click", () => {
-      // Clear messages and history, show fresh menu
-      msgs.innerHTML = "";
-      history = [];
+      msgs.innerHTML = ""; history = [];
       addMessage("assistant", WELCOME);
       showMenuCards();
     });
     wrap.appendChild(clearBtn);
-
     msgs.appendChild(wrap);
     scrollBottom();
   }
+
 
   function openPanel() {
     isOpen = true;
@@ -462,6 +480,7 @@ window.copyToClipboard = function(text, el) {
 
     // Create streaming bubble
     msgs.querySelector(".rb-menu-wrap")?.remove();
+    document.getElementById("rb-chips-wrap")?.remove();
     const wrap   = document.createElement("div");
     wrap.className = "rb-msg assistant";
     const bubble = document.createElement("div");
