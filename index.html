@@ -334,6 +334,30 @@
     .trending-papers-wrap { margin: 16px 0; }
     .rw-tab:focus { outline: 2px solid #4338CA; outline-offset: 2px; }
 
+    /* ── Sort bar ── */
+    .sort-bar {
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+      margin-bottom: 12px; padding: 8px 12px;
+      background: #f8fafc; border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .sort-label {
+      font-size: 12px; font-weight: 600; color: var(--text-muted);
+      margin-right: 2px; white-space: nowrap;
+    }
+    .sort-btn {
+      padding: 4px 12px; border-radius: 20px; border: 1.5px solid #e2e8f0;
+      background: #fff; font-family: 'DM Sans', sans-serif;
+      font-size: 12px; font-weight: 500; color: #64748b;
+      cursor: pointer; transition: all .15s; white-space: nowrap;
+    }
+    .sort-btn:hover  { border-color: #4338CA; color: #4338CA; background: #f0f4ff; }
+    .sort-btn.active { border-color: #4338CA; color: #4338CA; background: #e0e7ff; font-weight: 700; }
+
+    /* ── Q1 row highlight ── */
+    tr.q1-row { background: #fafff5 !important; }
+    tr.q1-row td:first-child { border-left: 3px solid #059669; }
+
     /* ── KU APC note ── */
     .ku-apc-note {
       background: #fefce8;
