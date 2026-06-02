@@ -119,8 +119,15 @@ function renderJournalCard(j, idx) {
   // Unique ID for async loaders
   const uid = (j.issn || j.name || "").replace(/[^a-zA-Z0-9]/g, "").slice(0, 16);
 
-  return `
-    <div class="card j-card">
+      const _q     = (j.ranking || {}).quartile || "";
+    const _h     = parseInt((j.ranking || {}).h_index || (j.openalex || {}).h_index || 0) || 0;
+    const _qrank = {"Q1":1,"Q2":2,"Q3":3,"Q4":4}[_q] || 9;
+    return `
+    <div class="card j-card"
+         data-fit="${idx}"
+         data-quartile="${_qrank}"
+         data-hindex="${_h}"
+         data-qraw="${esc(_q)}">
       <div class="j-header">
         <div class="j-meta">#${idx + 1} · ${esc(j.publisher || "")}${j.issn ? ` · ISSN ${esc(j.issn)}` : ""}</div>
         <div class="j-title">${esc(j.name)}</div>
@@ -277,8 +284,18 @@ function renderJournalResults(result, container) {
 
     ${renderManuscriptUnderstanding(result.manuscript_understanding)}
 
-    <h3 style="font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:16px">🏆 Best-fit journal shortlist</h3>
-    ${journals.map((j, i) => renderJournalCard(j, i)).join("")}
+    <h3 style="font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:10px">🏆 Best-fit journal shortlist</h3>
+
+    <div class="sort-bar" id="journal-sort-bar">
+      <span class="sort-label">Sort by:</span>
+      <button class="sort-btn active" data-sort="fit"      onclick="sortJournalCards('fit',this)">🎯 Best fit</button>
+      <button class="sort-btn"        data-sort="quartile" onclick="sortJournalCards('quartile',this)">📊 Quartile first</button>
+      <button class="sort-btn"        data-sort="hindex"   onclick="sortJournalCards('hindex',this)">📈 H-index</button>
+    </div>
+
+    <div id="journal-cards-wrap">
+      ${journals.map((j, i) => renderJournalCard(j, i)).join("")}
+    </div>
     ${renderExtendedList(extended)}
 
     ${renderRepoRecommendation(result.repository_recommendation)}
@@ -409,8 +426,17 @@ function renderSubjectResults(result, container) {
     const oaBadge = j.open_access === "Yes"
       ? '<span class="badge b-success" style="font-size:10px">OA</span>'
       : "";
+    const _sq     = j.quartile || "";
+    const _sqrank = {"Q1":1,"Q2":2,"Q3":3,"Q4":4}[_sq] || 9;
+    const _sh     = j.h_index || 0;
+    const _soa    = j.open_access === "Yes" ? 0 : 1;
     return `
-      <tr id="row-${uid}">
+      <tr id="row-${uid}"
+          data-quartile="${_sqrank}"
+          data-hindex="${_sh}"
+          data-oa="${_soa}"
+          data-qraw="${esc(_sq)}"
+          ${_sq === "Q1" ? 'class="q1-row"' : ""}>
         <td style="color:var(--text-muted);font-size:12px;font-family:'JetBrains Mono',monospace">${i + 1}</td>
         <td>
           <strong style="font-size:13px">${esc(j.name)}</strong>
@@ -489,14 +515,20 @@ function renderSubjectResults(result, container) {
       </div>
     </div>
     ${banner}
+    <div class="sort-bar" id="subj-sort-bar">
+      <span class="sort-label">Sort by:</span>
+      <button class="sort-btn active" data-sort="hindex"   onclick="sortSubjectTable('hindex',this)">📈 H-index</button>
+      <button class="sort-btn"        data-sort="quartile" onclick="sortSubjectTable('quartile',this)">📊 Quartile first</button>
+      <button class="sort-btn"        data-sort="oa"       onclick="sortSubjectTable('oa',this)">🔓 OA first</button>
+    </div>
     <div class="card" style="overflow:hidden;margin-bottom:20px">
-      <table class="ext-table" style="width:100%">
+      <table class="ext-table" style="width:100%" id="subj-table">
         <thead>
           <tr>
             <th>#</th><th>Journal</th><th>ISSN</th><th>Quartile</th><th>H-index</th><th>Verify &amp; Actions</th>
           </tr>
         </thead>
-        <tbody>${rows}</tbody>
+        <tbody id="subj-tbody">${rows}</tbody>
       </table>
     </div>
     <div class="subj-tip">
@@ -644,4 +676,60 @@ window.analyseFullyFromSubject = function(jName, jIssn) {
     }
   }
   document.querySelector(".tabs-bar")?.scrollIntoView({ behavior: "smooth", block: "start" });
+};
+
+
+// ── Manuscript Analysis — sort journal cards ──────────────────────────────
+window.sortJournalCards = function(mode, btn) {
+  const wrap = document.getElementById("journal-cards-wrap");
+  if (!wrap) return;
+
+  // Update active button
+  document.querySelectorAll("#journal-sort-bar .sort-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+
+  const cards = Array.from(wrap.querySelectorAll(".j-card"));
+  cards.sort((a, b) => {
+    if (mode === "fit")      return +a.dataset.fit      - +b.dataset.fit;
+    if (mode === "quartile") return +a.dataset.quartile - +b.dataset.quartile;
+    if (mode === "hindex")   return +b.dataset.hindex   - +a.dataset.hindex;
+    return 0;
+  });
+
+  // Re-number and re-append
+  cards.forEach((card, i) => {
+    const meta = card.querySelector(".j-meta");
+    if (meta) {
+      meta.textContent = meta.textContent.replace(/^#\d+/, `#${i + 1}`);
+    }
+    wrap.appendChild(card);
+  });
+};
+
+// ── Subject Browse — sort table rows ─────────────────────────────────────
+window.sortSubjectTable = function(mode, btn) {
+  const tbody = document.getElementById("subj-tbody");
+  if (!tbody) return;
+
+  document.querySelectorAll("#subj-sort-bar .sort-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+
+  const rows = Array.from(tbody.querySelectorAll("tr[data-quartile]"));
+  rows.sort((a, b) => {
+    if (mode === "quartile") {
+      const qDiff = +a.dataset.quartile - +b.dataset.quartile;
+      if (qDiff !== 0) return qDiff;
+      return +b.dataset.hindex - +a.dataset.hindex; // secondary: h-index desc
+    }
+    if (mode === "hindex")   return +b.dataset.hindex - +a.dataset.hindex;
+    if (mode === "oa")       return +a.dataset.oa - +b.dataset.oa;
+    return 0;
+  });
+
+  // Re-number rank column
+  rows.forEach((row, i) => {
+    const rankCell = row.querySelector("td:first-child");
+    if (rankCell) rankCell.textContent = i + 1;
+    tbody.appendChild(row);
+  });
 };
