@@ -358,14 +358,44 @@ export function renderRelatedWorksAccordion(journal) {
         this.querySelector('.acc-arrow').classList.toggle('open');
         window._loadRelatedWorks('${uid}', '${sourceId}', '${issn}');
       ">
-        <span>📄 View highly cited works in this journal</span>
+        <span>📄 Related works in this journal</span>
         <span class="acc-arrow" style="transition:transform .2s;display:inline-block">▾</span>
       </button>
       <div class="acc-body" id="rw-${uid}">
-        <div class="rw-loading">Click to load...</div>
+        <!-- Sub-tabs: Highly Cited | Papers Citing -->
+        <div class="rw-tabs" style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:10px">
+          <button class="rw-tab active" id="rwtab-cited-${uid}"
+            onclick="window._switchRwTab('${uid}','cited')"
+            style="padding:6px 14px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid #4338CA;color:#4338CA;font-family:'DM Sans',sans-serif">
+            Highly cited
+          </button>
+          <button class="rw-tab" id="rwtab-chain-${uid}"
+            onclick="window._switchRwTab('${uid}','chain')"
+            style="padding:6px 14px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;color:var(--text-muted);font-family:'DM Sans',sans-serif">
+            Citation chain
+          </button>
+        </div>
+        <div id="rwpanel-cited-${uid}"><div class="rw-loading">Loading...</div></div>
+        <div id="rwpanel-chain-${uid}" style="display:none">
+          <p style="font-size:12px;color:var(--text-muted);padding:4px 0 8px">
+            Select a paper from "Highly cited" first, then click <strong>See who cites this →</strong>
+          </p>
+        </div>
       </div>
     </div>`;
 }
+
+window._switchRwTab = function(uid, tab) {
+  ["cited","chain"].forEach(t => {
+    const btn   = document.getElementById(`rwtab-${t}-${uid}`);
+    const panel = document.getElementById(`rwpanel-${t}-${uid}`);
+    if (!btn || !panel) return;
+    const active = t === tab;
+    btn.style.borderBottomColor = active ? "#4338CA" : "transparent";
+    btn.style.color = active ? "#4338CA" : "var(--text-muted)";
+    panel.style.display = active ? "block" : "none";
+  });
+};
 
 // Global — called from inline onclick in renderRelatedWorksAccordion
 window._loadRelatedWorks = async function(uid, sourceId, issn) {
@@ -392,10 +422,12 @@ window._loadRelatedWorks = async function(uid, sourceId, issn) {
       return;
     }
 
-    const rows = works.map(w => {
+    const rows = works.map((w, i) => {
       const doi    = w.doi    ? `<a href="${w.doi}" target="_blank" class="vlink" style="font-size:11px">DOI ↗</a>` : "";
       const oaLink = w.openalex_url ? `<a href="${w.openalex_url}" target="_blank" class="vlink" style="font-size:11px">OpenAlex ↗</a>` : "";
       const authors = (w.authors || []).slice(0, 3).join(", ");
+      const workId = w.openalex_url || "";
+      const chainUid = uid + i;
       return `
         <div class="rw-item">
           <div class="rw-title">${w.title || "Untitled"}</div>
@@ -404,9 +436,16 @@ window._loadRelatedWorks = async function(uid, sourceId, issn) {
             ${w.year    ? `<span>${w.year}</span>` : ""}
             ${w.cited_by ? `<span>📊 ${w.cited_by.toLocaleString()} citations</span>` : ""}
             ${doi} ${oaLink}
+            ${workId ? `<button onclick="window._startCitationChain('${uid}','${workId}','${(w.title||'').replace(/'/g,'').slice(0,40)}')"
+              style="font-size:11px;background:#e0e7ff;color:#4338CA;border:none;border-radius:4px;padding:2px 7px;cursor:pointer;font-family:'DM Sans',sans-serif">
+              See who cites this →
+            </button>` : ""}
           </div>
         </div>`;
     }).join("");
+
+    // Store the panel ref for later (citation chain needs it)
+    container._uid = uid;
 
     container.innerHTML = `
       <div class="rw-list">
@@ -415,5 +454,203 @@ window._loadRelatedWorks = async function(uid, sourceId, issn) {
       </div>`;
   } catch (e) {
     container.innerHTML = `<p style="font-size:13px;color:var(--text-muted)">Could not load works data.</p>`;
+  }
+};
+
+// ── Deeper Analysis Strip — links to Scopus, WoS, SciVal ─────────────────
+const KU_PROXY = "http://login.khalifa.idm.oclc.org/login?url=";
+const SCOPUS_URL  = `${KU_PROXY}https://www.scopus.com`;
+const WOS_URL     = `${KU_PROXY}https://www.webofscience.com`;
+const SCIVAL_URL  = `${KU_PROXY}https://www.scival.com`;
+
+export function renderDeeperAnalysisStrip(journalName, issn) {
+  const q = issn
+    ? `${KU_PROXY}https://www.scopus.com/sources?ORIGIN=SRCTITLE&title=${encodeURIComponent(journalName)}`
+    : `${KU_PROXY}https://www.scopus.com/sources`;
+  return `
+    <div class="deeper-analysis-strip">
+      <span class="deeper-analysis-label">🔬 Deeper analysis:</span>
+      <a href="${esc(q)}"          target="_blank" rel="noopener" class="da-link da-scopus">📊 Scopus Sources</a>
+      <a href="${esc(WOS_URL)}"    target="_blank" rel="noopener" class="da-link da-wos">🔬 Web of Science</a>
+      <a href="${esc(SCIVAL_URL)}" target="_blank" rel="noopener" class="da-link da-scival">📈 SciVal</a>
+    </div>`;
+}
+
+export function renderSubjectDeeperAnalysisStrip() {
+  return `
+    <div class="subject-deeper-strip">
+      <span style="font-size:13px;font-weight:600;color:var(--text-muted)">🔬 For citation analysis, author metrics &amp; research performance:</span>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+        <a href="${esc(SCOPUS_URL)}"  target="_blank" rel="noopener" class="da-link da-scopus">📊 Scopus</a>
+        <a href="${esc(WOS_URL)}"     target="_blank" rel="noopener" class="da-link da-wos">🔬 Web of Science</a>
+        <a href="${esc(SCIVAL_URL)}"  target="_blank" rel="noopener" class="da-link da-scival">📈 SciVal</a>
+        <a href="https://library.ku.ac.ae/lib" target="_blank" rel="noopener" class="da-link da-library">🏛️ KU Library</a>
+      </div>
+    </div>`;
+}
+
+// ── Trending papers placeholder — loaded async via window._loadTrendingPapers ─
+export function renderTrendingPapersSection(concept, conceptId) {
+  if (!concept && !conceptId) return "";
+  const uid = (concept || "").replace(/[^a-zA-Z0-9]/g, "").slice(0, 20) || "topic";
+  const _HF = "https://nikeshn-researchbee.hf.space";
+  return `
+    <div class="trending-papers-wrap">
+      <button class="ext-toggle" onclick="
+        this.classList.toggle('open');
+        var b = this.nextElementSibling;
+        b.style.display = b.style.display === 'none' || b.style.display === '' ? 'block' : 'none';
+        window._loadTrendingPapers('${uid}', '${encodeURIComponent(conceptId || concept || "")}', '${esc(concept || "")}');
+      ">
+        <span>📈 Trending papers in ${esc(concept || "this field")}</span>
+        <span class="ext-arrow">▼</span>
+      </button>
+      <div id="trending-${uid}" style="display:none;margin-top:6px">
+        <div style="font-size:12px;color:var(--text-muted);padding:8px">Click to load trending papers...</div>
+      </div>
+    </div>`;
+}
+
+// Global — called from inline onclick
+window._loadTrendingPapers = async function(uid, conceptParam, conceptLabel) {
+  const container = document.getElementById(`trending-${uid}`);
+  if (!container || container.dataset.loaded) return;
+  container.dataset.loaded = "1";
+  container.innerHTML = `<div style="font-size:12px;color:var(--text-muted);padding:8px">Loading trending papers...</div>`;
+
+  try {
+    const _HF = "https://nikeshn-researchbee.hf.space";
+    const concept = decodeURIComponent(conceptParam);
+    // Use OpenAlex works API — filter by concept, sort by citation, last 3 years
+    const year = new Date().getFullYear() - 3;
+    const filter = concept.startsWith("C")
+      ? `concepts.id:${concept},publication_year:>${year},is_retracted:false`
+      : `concepts.display_name.search:${encodeURIComponent(concept)},publication_year:>${year},is_retracted:false`;
+
+    const r = await fetch(
+      `https://api.openalex.org/works?filter=${filter}&sort=cited_by_count:desc&per_page=5&select=id,title,publication_year,doi,cited_by_count,authorships,primary_location`
+    );
+    if (!r.ok) throw new Error("API error");
+    const data  = await r.json();
+    const works = data.results || [];
+
+    if (!works.length) {
+      container.innerHTML = `<p style="font-size:13px;color:var(--text-muted);padding:8px">No trending papers found for this field.</p>`;
+      return;
+    }
+
+    const rows = works.map((w, i) => {
+      const authors = (w.authorships || []).slice(0,3).map(a => a?.author?.display_name || "").filter(Boolean).join(", ");
+      const journal = w.primary_location?.source?.display_name || "";
+      const doi     = w.doi ? `<a href="${w.doi}" target="_blank" class="vlink" style="font-size:11px">DOI ↗</a>` : "";
+      const oaLink  = w.id  ? `<a href="${w.id}"  target="_blank" class="vlink" style="font-size:11px">OpenAlex ↗</a>` : "";
+      return `
+        <div class="rw-item">
+          <div class="rw-title">${w.title || "Untitled"}</div>
+          ${authors ? `<div class="rw-authors">${authors}${journal ? ` · <em>${journal}</em>` : ""}</div>` : ""}
+          <div class="rw-meta">
+            ${w.publication_year ? `<span>${w.publication_year}</span>` : ""}
+            ${w.cited_by_count   ? `<span>📊 ${w.cited_by_count.toLocaleString()} citations</span>` : ""}
+            ${doi} ${oaLink}
+          </div>
+        </div>`;
+    }).join("");
+
+    container.innerHTML = `
+      <div class="rw-list">
+        ${rows}
+        <div class="rw-src">Source: <a href="https://openalex.org" target="_blank" class="vlink">OpenAlex</a> · Most cited in last 3 years</div>
+      </div>`;
+  } catch(e) {
+    container.innerHTML = `<p style="font-size:13px;color:var(--text-muted);padding:8px">Could not load trending papers.</p>`;
+  }
+};
+
+// ── Citation chaining — forward citations for a specific paper ────────────
+window._loadCitedBy = async function(workId, uid) {
+  const container = document.getElementById(`citedby-${uid}`);
+  if (!container || container.dataset.loaded) return;
+  container.dataset.loaded = "1";
+  container.innerHTML = `<div style="font-size:12px;color:var(--text-muted);padding:8px">Loading citing papers...</div>`;
+
+  try {
+    const cleanId = workId.replace("https://openalex.org/", "");
+    const r = await fetch(
+      `https://api.openalex.org/works?filter=cites:${cleanId}&sort=cited_by_count:desc&per_page=5&select=id,title,publication_year,doi,cited_by_count,authorships`
+    );
+    if (!r.ok) throw new Error("API error");
+    const data  = await r.json();
+    const works = data.results || [];
+
+    if (!works.length) {
+      container.innerHTML = `<p style="font-size:13px;color:var(--text-muted);padding:8px">No citing papers found.</p>`;
+      return;
+    }
+
+    const rows = works.map(w => {
+      const authors = (w.authorships || []).slice(0,2).map(a => a?.author?.display_name || "").filter(Boolean).join(", ");
+      const doi = w.doi ? `<a href="${w.doi}" target="_blank" class="vlink" style="font-size:11px">DOI ↗</a>` : "";
+      return `
+        <div class="rw-item">
+          <div class="rw-title">${w.title || "Untitled"}</div>
+          ${authors ? `<div class="rw-authors">${authors}</div>` : ""}
+          <div class="rw-meta">
+            ${w.publication_year ? `<span>${w.publication_year}</span>` : ""}
+            ${w.cited_by_count   ? `<span>📊 ${w.cited_by_count.toLocaleString()} citations</span>` : ""}
+            ${doi}
+          </div>
+        </div>`;
+    }).join("");
+
+    container.innerHTML = `<div class="rw-list">${rows}<div class="rw-src">Papers citing this work · Source: <a href="https://openalex.org" target="_blank" class="vlink">OpenAlex</a></div></div>`;
+  } catch(e) {
+    container.innerHTML = `<p style="font-size:13px;color:var(--text-muted);padding:8px">Could not load citing papers.</p>`;
+  }
+};
+// ── Start citation chain from a selected paper ────────────────────────────
+window._startCitationChain = async function(uid, workId, title) {
+  // Switch to citation chain tab
+  window._switchRwTab(uid, "chain");
+  const chainPanel = document.getElementById(`rwpanel-chain-${uid}`);
+  if (!chainPanel) return;
+  chainPanel.innerHTML = `<p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Papers citing: <strong>${title}...</strong></p><div class="rw-loading">Loading...</div>`;
+
+  try {
+    const cleanId = workId.replace("https://openalex.org/", "");
+    const r = await fetch(
+      `https://api.openalex.org/works?filter=cites:${cleanId}&sort=cited_by_count:desc&per_page=5&select=id,title,publication_year,doi,cited_by_count,authorships`
+    );
+    if (!r.ok) throw new Error();
+    const data  = await r.json();
+    const works = data.results || [];
+
+    if (!works.length) {
+      chainPanel.innerHTML = `<p style="font-size:13px;color:var(--text-muted)">No citing papers found for this work.</p>`;
+      return;
+    }
+
+    const rows = works.map(w => {
+      const authors = (w.authorships || []).slice(0,2).map(a => a?.author?.display_name || "").filter(Boolean).join(", ");
+      const doi = w.doi ? `<a href="${w.doi}" target="_blank" class="vlink" style="font-size:11px">DOI ↗</a>` : "";
+      return `
+        <div class="rw-item">
+          <div class="rw-title">${w.title || "Untitled"}</div>
+          ${authors ? `<div class="rw-authors">${authors}</div>` : ""}
+          <div class="rw-meta">
+            ${w.publication_year ? `<span>${w.publication_year}</span>` : ""}
+            ${w.cited_by_count   ? `<span>📊 ${w.cited_by_count.toLocaleString()} citations</span>` : ""}
+            ${doi}
+          </div>
+        </div>`;
+    }).join("");
+
+    chainPanel.innerHTML = `
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Papers citing: <strong>${title}...</strong></p>
+      <div class="rw-list">${rows}
+        <div class="rw-src">Forward citations · Source: <a href="https://openalex.org" target="_blank" class="vlink">OpenAlex</a></div>
+      </div>
+      <button onclick="window._switchRwTab('${uid}','cited')" style="font-size:11px;margin-top:6px;background:none;border:1px solid var(--border);border-radius:6px;padding:3px 10px;cursor:pointer;color:var(--text-muted);font-family:'DM Sans',sans-serif">← Back to highly cited</button>`;
+  } catch(e) {
+    chainPanel.innerHTML = `<p style="font-size:13px;color:var(--text-muted)">Could not load citing papers.</p>`;
   }
 };
