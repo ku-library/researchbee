@@ -12,7 +12,31 @@ import {
 } from "./render.js";
 
 const HF_BASE    = "https://nikeshn-researchbee.hf.space";
-const KU_OA_LINK = "https://library.ku.ac.ae/oa";
+const KU_OA_LINK    = "https://library.ku.ac.ae/oa";
+const KU_RATINGS    = "https://library.ku.ac.ae/oa/ratings";
+const KU_PUB_PAGES  = {
+  "american chemical society": "https://library.ku.ac.ae/oa/acs",
+  "acs publications":          "https://library.ku.ac.ae/oa/acs",
+  "ieee":                      "https://library.ku.ac.ae/oa/ieee",
+  "institute of electrical":   "https://library.ku.ac.ae/oa/ieee",
+  "elsevier":                  "https://library.ku.ac.ae/oa/elsevier",
+  "springer":                  "https://library.ku.ac.ae/oa/SpringerNature",
+  "springer nature":           "https://library.ku.ac.ae/oa/SpringerNature",
+  "nature portfolio":          "https://library.ku.ac.ae/oa/SpringerNature",
+  "taylor":                    "https://library.ku.ac.ae/oa/TandF",
+  "taylor & francis":          "https://library.ku.ac.ae/oa/TandF",
+  "routledge":                 "https://library.ku.ac.ae/oa/TandF",
+  "wiley":                     "https://library.ku.ac.ae/oa/wiley",
+  "wiley-blackwell":           "https://library.ku.ac.ae/oa/wiley",
+};
+
+function getKuPubPage(publisher) {
+  const p = (publisher || "").toLowerCase();
+  for (const [key, url] of Object.entries(KU_PUB_PAGES)) {
+    if (p.includes(key)) return url;
+  }
+  return KU_OA_LINK;
+}
 
 export function journalTab() {
   const form    = document.getElementById("journal-form");
@@ -116,8 +140,27 @@ function renderJournalCard(j, idx) {
 
         ${j.ku_apc_covered ? `
           <div class="ku-apc-note">
-            🎓 <strong>KU researchers:</strong> KU Library may cover the APC for this journal.
-            Verify eligibility at <a href="${KU_OA_LINK}" target="_blank" rel="noopener">library.ku.ac.ae/oa ↗</a>
+            <div style="display:flex;align-items:flex-start;gap:8px">
+              <span style="font-size:18px;flex-shrink:0">🎓</span>
+              <div>
+                <strong>KU Library may cover the APC for this journal.</strong>
+                <div style="margin-top:4px;font-size:12px;color:#92400e;line-height:1.5">
+                  This journal is <strong>Q1</strong> and the publisher has a KU OA agreement.
+                  Verify it is in the <strong>top 15% by Scopus</strong> before submitting your OA request.
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+                  <a href="${getKuPubPage(j.publisher)}" target="_blank" rel="noopener"
+                     style="font-size:12px;font-weight:600;color:#854d0e;text-decoration:underline">
+                    View ${esc(j.publisher || "publisher")} OA process ↗
+                  </a>
+                  <span style="color:#d97706">·</span>
+                  <a href="${KU_RATINGS}" target="_blank" rel="noopener"
+                     style="font-size:12px;font-weight:600;color:#854d0e;text-decoration:underline">
+                    Check top 15% ratings ↗
+                  </a>
+                </div>
+              </div>
+            </div>
           </div>` : ""}
 
         <div class="detail-grid">
@@ -174,7 +217,10 @@ function renderExtendedList(list) {
           <div class="ext-links">
             ${vl.scopus      ? `<a href="${esc(vl.scopus)}"        target="_blank" class="el el-scopus">Scopus</a>` : ""}
             ${vl.sherpa_romeo? `<a href="${esc(vl.sherpa_romeo)}"  target="_blank" class="el el-sherpa">Open Policy Finder</a>` : ""}
-            ${j.ku_apc_covered ? `<a href="${KU_OA_LINK}" target="_blank" class="el" style="background:#fef9c3;color:#854d0e;border:1px solid #fde047">🎓 KU APC may apply</a>` : ""}
+            ${j.ku_apc_covered ? `
+              <a href="${getKuPubPage(j.publisher)}" target="_blank" class="el" style="background:#fef9c3;color:#854d0e;border:1px solid #fde047" title="KU APC may apply — Q1 journal">🎓 KU APC</a>
+              <a href="${KU_RATINGS}" target="_blank" class="el" style="background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;font-size:10px" title="Check top 15% eligibility">Check rating ↗</a>
+            ` : ""}
           </div>
         </td>
       </tr>`;
@@ -386,7 +432,10 @@ function renderSubjectResults(result, container) {
             ${vl.doaj           ? `<a href="${esc(vl.doaj)}"           target="_blank" class="el" style="background:#fef3c7;color:#92400e">DOAJ</a>` : ""}
             ${vl.scopus_sources ? `<a href="${esc(vl.scopus_sources)}" target="_blank" class="el" style="background:#e0e7ff;color:#3730a3">Scopus</a>` : ""}
             ${vl.issn_display   ? `<span class="copy-chip copy-chip-sm" onclick="copyToClipboard('${esc(vl.issn_display)}',this)" title="Copy ISSN">${esc(vl.issn_display)} 📋</span>` : ""}
-            ${j.ku_apc_covered  ? `<a href="${KU_OA_LINK}" target="_blank" class="el" style="background:#fef9c3;color:#854d0e;border:1px solid #fde047">🎓 KU APC may apply</a>` : ""}
+            ${j.ku_apc_covered  ? `
+              <a href="${getKuPubPage(j.publisher)}" target="_blank" class="el" style="background:#fef9c3;color:#854d0e;border:1px solid #fde047" title="KU APC may apply — Q1 journal. Verify top 15%.">🎓 KU APC</a>
+              <a href="${KU_RATINGS}" target="_blank" class="el" style="background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;font-size:10px">Check rating ↗</a>
+            ` : ""}
           </div>
           <div style="display:flex;gap:6px;flex-wrap:wrap">
             <button class="el" style="background:#e0e7ff;color:#3730a3;cursor:pointer;border:none"
