@@ -11,7 +11,8 @@ import {
   renderDeeperAnalysisStrip, renderSubjectDeeperAnalysisStrip, renderTrendingPapersSection
 } from "./render.js";
 
-const HF_BASE = "https://nikeshn-researchbee.hf.space";
+const HF_BASE    = "https://nikeshn-researchbee.hf.space";
+const KU_OA_LINK = "https://library.ku.ac.ae/oa";
 
 export function journalTab() {
   const form    = document.getElementById("journal-form");
