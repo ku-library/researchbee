@@ -7,11 +7,11 @@ import {
   renderRankingBlock, renderKhaznaCard, renderHelpCard,
   renderNextActions, renderManuscriptUnderstanding, renderMascotRow,
   renderSubmissionChecklist, renderCoverLetterBtn,
-  renderRelatedWorksAccordion, renderAltmetricPlaceholder, loadAltmetricBadge
+  renderRelatedWorksAccordion, renderAltmetricPlaceholder, loadAltmetricBadge,
+  renderDeeperAnalysisStrip, renderSubjectDeeperAnalysisStrip, renderTrendingPapersSection
 } from "./render.js";
 
 const HF_BASE = "https://nikeshn-researchbee.hf.space";
-const KU_OA_LINK = "https://library.ku.ac.ae/oa";
 
 export function journalTab() {
   const form    = document.getElementById("journal-form");
@@ -112,14 +112,6 @@ function renderJournalCard(j, idx) {
         </div>
       </div>
       <div class="j-body">
-
-        <!-- KU APC note — shown if publisher has KU agreement + journal in top 15% -->
-        ${j.ku_apc_covered ? `
-          <div class="ku-apc-note">
-            🎓 <strong>KU researchers:</strong> KU Library may cover the APC for this journal.
-            Verify eligibility at <a href="${KU_OA_LINK}" target="_blank" rel="noopener">library.ku.ac.ae/oa ↗</a>
-          </div>` : ""}
-
         <div class="detail-grid">
           <div class="detail-item"><h5>🎯 Why it fits</h5><p>${esc(j.fit_reason)}</p></div>
           <div class="detail-item"><h5>👥 Audience match</h5><p>${esc(j.audience_match)}</p></div>
@@ -150,6 +142,8 @@ function renderJournalCard(j, idx) {
 
         ${renderVerifyLinks(j.verify_links)}
 
+        ${renderDeeperAnalysisStrip(j.name, j.issn)}
+
         <!-- Altmetric badge — async loaded after render -->
         ${renderAltmetricPlaceholder(j.issn)}
       </div>
@@ -172,7 +166,6 @@ function renderExtendedList(list) {
           <div class="ext-links">
             ${vl.scopus      ? `<a href="${esc(vl.scopus)}"        target="_blank" class="el el-scopus">Scopus</a>` : ""}
             ${vl.sherpa_romeo? `<a href="${esc(vl.sherpa_romeo)}"  target="_blank" class="el el-sherpa">Open Policy Finder</a>` : ""}
-            ${j.ku_apc_covered ? `<a href="${KU_OA_LINK}" target="_blank" class="el" style="background:#fef9c3;color:#854d0e;border:1px solid #fde047">🎓 KU APC may apply</a>` : ""}
           </div>
         </td>
       </tr>`;
@@ -235,12 +228,21 @@ function renderJournalResults(result, container) {
 
     ${renderManuscriptUnderstanding(result.manuscript_understanding)}
 
-    <h3 style="font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:16px">🏆 Top 10 best-fit journals</h3>
+    <h3 style="font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:16px">🏆 Best-fit journal shortlist</h3>
     ${journals.map((j, i) => renderJournalCard(j, i)).join("")}
     ${renderExtendedList(extended)}
 
     ${renderRepoRecommendation(result.repository_recommendation)}
     ${result.khazna ? renderKhaznaCard(result.khazna, "article") : ""}
+
+    <!-- Trending papers — based on first journal's top concept -->
+    ${(() => {
+      const firstJ = (result.journals || [])[0];
+      const concept   = firstJ?.openalex?.top_concept    || result.manuscript_understanding?.discipline || "";
+      const conceptId = firstJ?.openalex?.top_concept_id || "";
+      return concept ? renderTrendingPapersSection(concept, conceptId) : "";
+    })()}
+
     ${renderNextActions(result.next_actions, result.global_notes)}
     ${renderHelpCard()}
   `;
@@ -347,7 +349,7 @@ function renderSubjectResults(result, container) {
        </div>`
     : "";
 
-  const makeSubjRows = (items, startIdx) => items.map((j, i) => {
+  const rows = journals.map((j, i) => {
     const vl   = j.verify_links || {};
     const q    = j.quartile;
     const uid  = (j.issn || j.name || "").replace(/[^a-zA-Z0-9]/g, "");
@@ -360,7 +362,7 @@ function renderSubjectResults(result, container) {
       : "";
     return `
       <tr id="row-${uid}">
-        <td style="color:var(--text-muted);font-size:12px;font-family:'JetBrains Mono',monospace">${startIdx + i + 1}</td>
+        <td style="color:var(--text-muted);font-size:12px;font-family:'JetBrains Mono',monospace">${i + 1}</td>
         <td>
           <strong style="font-size:13px">${esc(j.name)}</strong>
           <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${esc(j.publisher || "")}</div>
@@ -375,7 +377,6 @@ function renderSubjectResults(result, container) {
             ${vl.doaj           ? `<a href="${esc(vl.doaj)}"           target="_blank" class="el" style="background:#fef3c7;color:#92400e">DOAJ</a>` : ""}
             ${vl.scopus_sources ? `<a href="${esc(vl.scopus_sources)}" target="_blank" class="el" style="background:#e0e7ff;color:#3730a3">Scopus</a>` : ""}
             ${vl.issn_display   ? `<span class="copy-chip copy-chip-sm" onclick="copyToClipboard('${esc(vl.issn_display)}',this)" title="Copy ISSN">${esc(vl.issn_display)} 📋</span>` : ""}
-            ${j.ku_apc_covered  ? `<a href="${KU_OA_LINK}" target="_blank" class="el" style="background:#fef9c3;color:#854d0e;border:1px solid #fde047">🎓 KU APC may apply</a>` : ""}
           </div>
           <div style="display:flex;gap:6px;flex-wrap:wrap">
             <button class="el" style="background:#e0e7ff;color:#3730a3;cursor:pointer;border:none"
@@ -425,22 +426,6 @@ function renderSubjectResults(result, container) {
       </tr>`;
   }).join("");
 
-  const first15  = journals.slice(0, 15);
-  const next15   = journals.slice(15);
-  const nextSection = next15.length ? `
-    <div class="ext-next-wrap">
-      <button class="ext-toggle" style="margin-top:8px" onclick="this.classList.toggle('open');var b=this.nextElementSibling;b.style.display=b.style.display==='none'||b.style.display===''?'block':'none';">
-        <span>📋 Show next ${next15.length} journals (#16–${journals.length})</span>
-        <span class="ext-arrow">▼</span>
-      </button>
-      <div style="display:none;margin-top:6px;overflow:hidden">
-        <table class="ext-table" style="width:100%">
-          <thead><tr><th>#</th><th>Journal</th><th>ISSN</th><th>Quartile</th><th>H-index</th><th>Verify &amp; Actions</th></tr></thead>
-          <tbody>${makeSubjRows(next15, 15)}</tbody>
-        </table>
-      </div>
-    </div>` : "";
-
   container.innerHTML = `
     ${renderMascotRow('Here are the top journals for ' + esc(result.normalised) + '.')}
     <div class="results-header">
@@ -454,20 +439,25 @@ function renderSubjectResults(result, container) {
     <div class="card" style="overflow:hidden;margin-bottom:20px">
       <table class="ext-table" style="width:100%">
         <thead>
-          <tr><th>#</th><th>Journal</th><th>ISSN</th><th>Quartile</th><th>H-index</th><th>Verify &amp; Actions</th></tr>
+          <tr>
+            <th>#</th><th>Journal</th><th>ISSN</th><th>Quartile</th><th>H-index</th><th>Verify &amp; Actions</th>
+          </tr>
         </thead>
-        <tbody>${makeSubjRows(first15, 0)}</tbody>
+        <tbody>${rows}</tbody>
       </table>
-      ${nextSection}
     </div>
     <div class="subj-tip">
       <strong>Want deeper analysis?</strong>
       Switch to <em>Analyse manuscript</em> mode above for full Green OA policy,
       submission strategy, and personalised recommendations.
     </div>
+
+    ${renderSubjectDeeperAnalysisStrip()}
+
+    ${renderTrendingPapersSection(result.normalised, result.scimago_concept_id || "")}
   `;
 
-    document.getElementById("subject-reset-btn")?.addEventListener("click", resetSubject);
+  document.getElementById("subject-reset-btn")?.addEventListener("click", resetSubject);
   container.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
