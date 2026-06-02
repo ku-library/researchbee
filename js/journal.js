@@ -14,27 +14,21 @@ import {
 const HF_BASE    = "https://nikeshn-researchbee.hf.space";
 const KU_OA_LINK    = "https://library.ku.ac.ae/oa";
 const KU_RATINGS    = "https://library.ku.ac.ae/oa/ratings";
-const KU_PUB_PAGES  = {
-  "american chemical society": "https://library.ku.ac.ae/oa/acs",
-  "acs publications":          "https://library.ku.ac.ae/oa/acs",
-  "ieee":                      "https://library.ku.ac.ae/oa/ieee",
-  "institute of electrical":   "https://library.ku.ac.ae/oa/ieee",
-  "elsevier":                  "https://library.ku.ac.ae/oa/elsevier",
-  "springer":                  "https://library.ku.ac.ae/oa/SpringerNature",
-  "springer nature":           "https://library.ku.ac.ae/oa/SpringerNature",
-  "nature portfolio":          "https://library.ku.ac.ae/oa/SpringerNature",
-  "taylor":                    "https://library.ku.ac.ae/oa/TandF",
-  "taylor & francis":          "https://library.ku.ac.ae/oa/TandF",
-  "routledge":                 "https://library.ku.ac.ae/oa/TandF",
-  "wiley":                     "https://library.ku.ac.ae/oa/wiley",
-  "wiley-blackwell":           "https://library.ku.ac.ae/oa/wiley",
-};
-
+// Maps keyword → KU OA publisher page
+// Checks if publisher string STARTS WITH or CONTAINS the keyword
 function getKuPubPage(publisher) {
-  const p = (publisher || "").toLowerCase();
-  for (const [key, url] of Object.entries(KU_PUB_PAGES)) {
-    if (p.includes(key)) return url;
-  }
+  const p = (publisher || "")
+    .toLowerCase()
+    .replace(/&amp;/g, "&")
+    .replace(/\.$/g, "")
+    .trim();
+
+  if (p.includes("elsevier"))                                    return "https://library.ku.ac.ae/oa/elsevier";
+  if (p.startsWith("ieee") || p.includes("ieee "))              return "https://library.ku.ac.ae/oa/ieee";
+  if (p.includes("american chemical society"))                   return "https://library.ku.ac.ae/oa/acs";
+  if (p.includes("springer") || p.includes("nature portfolio")) return "https://library.ku.ac.ae/oa/SpringerNature";
+  if (p.includes("taylor") || p.includes("routledge"))          return "https://library.ku.ac.ae/oa/TandF";
+  if (p.includes("wiley"))                                       return "https://library.ku.ac.ae/oa/wiley";
   return KU_OA_LINK;
 }
 
