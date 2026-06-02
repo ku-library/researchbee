@@ -112,6 +112,13 @@ function renderJournalCard(j, idx) {
         </div>
       </div>
       <div class="j-body">
+
+        ${j.ku_apc_covered ? `
+          <div class="ku-apc-note">
+            🎓 <strong>KU researchers:</strong> KU Library may cover the APC for this journal.
+            Verify eligibility at <a href="${KU_OA_LINK}" target="_blank" rel="noopener">library.ku.ac.ae/oa ↗</a>
+          </div>` : ""}
+
         <div class="detail-grid">
           <div class="detail-item"><h5>🎯 Why it fits</h5><p>${esc(j.fit_reason)}</p></div>
           <div class="detail-item"><h5>👥 Audience match</h5><p>${esc(j.audience_match)}</p></div>
@@ -166,6 +173,7 @@ function renderExtendedList(list) {
           <div class="ext-links">
             ${vl.scopus      ? `<a href="${esc(vl.scopus)}"        target="_blank" class="el el-scopus">Scopus</a>` : ""}
             ${vl.sherpa_romeo? `<a href="${esc(vl.sherpa_romeo)}"  target="_blank" class="el el-sherpa">Open Policy Finder</a>` : ""}
+            ${j.ku_apc_covered ? `<a href="${KU_OA_LINK}" target="_blank" class="el" style="background:#fef9c3;color:#854d0e;border:1px solid #fde047">🎓 KU APC may apply</a>` : ""}
           </div>
         </td>
       </tr>`;
@@ -377,6 +385,7 @@ function renderSubjectResults(result, container) {
             ${vl.doaj           ? `<a href="${esc(vl.doaj)}"           target="_blank" class="el" style="background:#fef3c7;color:#92400e">DOAJ</a>` : ""}
             ${vl.scopus_sources ? `<a href="${esc(vl.scopus_sources)}" target="_blank" class="el" style="background:#e0e7ff;color:#3730a3">Scopus</a>` : ""}
             ${vl.issn_display   ? `<span class="copy-chip copy-chip-sm" onclick="copyToClipboard('${esc(vl.issn_display)}',this)" title="Copy ISSN">${esc(vl.issn_display)} 📋</span>` : ""}
+            ${j.ku_apc_covered  ? `<a href="${KU_OA_LINK}" target="_blank" class="el" style="background:#fef9c3;color:#854d0e;border:1px solid #fde047">🎓 KU APC may apply</a>` : ""}
           </div>
           <div style="display:flex;gap:6px;flex-wrap:wrap">
             <button class="el" style="background:#e0e7ff;color:#3730a3;cursor:pointer;border:none"

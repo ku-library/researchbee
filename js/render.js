@@ -521,36 +521,34 @@ window._loadTrendingPapers = async function(uid, conceptParam, conceptLabel) {
   try {
     const _HF = "https://nikeshn-researchbee.hf.space";
     const concept = decodeURIComponent(conceptParam);
-    // Use OpenAlex works API — filter by concept, sort by citation, last 3 years
-    const year = new Date().getFullYear() - 3;
-    const filter = concept.startsWith("C")
-      ? `concepts.id:${concept},publication_year:>${year},is_retracted:false`
-      : `concepts.display_name.search:${encodeURIComponent(concept)},publication_year:>${year},is_retracted:false`;
+    // Route through HF backend to avoid CORS issues with direct OpenAlex calls
+    const isConceptId = /^C\d+$/.test(concept);
+    const params = isConceptId
+      ? `concept_id=${encodeURIComponent(concept)}&per_page=5`
+      : `concept=${encodeURIComponent(concept)}&per_page=5`;
 
-    const r = await fetch(
-      `https://api.openalex.org/works?filter=${filter}&sort=cited_by_count:desc&per_page=5&select=id,title,publication_year,doi,cited_by_count,authorships,primary_location`
-    );
+    const r = await fetch(`${_HF}/api/trending-papers?${params}`);
     if (!r.ok) throw new Error("API error");
     const data  = await r.json();
-    const works = data.results || [];
+    const works = data.works || [];
 
     if (!works.length) {
       container.innerHTML = `<p style="font-size:13px;color:var(--text-muted);padding:8px">No trending papers found for this field.</p>`;
       return;
     }
 
-    const rows = works.map((w, i) => {
-      const authors = (w.authorships || []).slice(0,3).map(a => a?.author?.display_name || "").filter(Boolean).join(", ");
-      const journal = w.primary_location?.source?.display_name || "";
-      const doi     = w.doi ? `<a href="${w.doi}" target="_blank" class="vlink" style="font-size:11px">DOI ↗</a>` : "";
-      const oaLink  = w.id  ? `<a href="${w.id}"  target="_blank" class="vlink" style="font-size:11px">OpenAlex ↗</a>` : "";
+    const rows = works.map(w => {
+      const authors  = (w.authors || []).join(", ");
+      const journal  = w.journal || "";
+      const doi      = w.doi      ? `<a href="${w.doi}" target="_blank" class="vlink" style="font-size:11px">DOI ↗</a>` : "";
+      const oaLink   = w.openalex_url ? `<a href="${w.openalex_url}" target="_blank" class="vlink" style="font-size:11px">OpenAlex ↗</a>` : "";
       return `
         <div class="rw-item">
           <div class="rw-title">${w.title || "Untitled"}</div>
           ${authors ? `<div class="rw-authors">${authors}${journal ? ` · <em>${journal}</em>` : ""}</div>` : ""}
           <div class="rw-meta">
-            ${w.publication_year ? `<span>${w.publication_year}</span>` : ""}
-            ${w.cited_by_count   ? `<span>📊 ${w.cited_by_count.toLocaleString()} citations</span>` : ""}
+            ${w.year    ? `<span>${w.year}</span>` : ""}
+            ${w.cited_by ? `<span>📊 ${w.cited_by.toLocaleString()} citations</span>` : ""}
             ${doi} ${oaLink}
           </div>
         </div>`;
@@ -559,7 +557,7 @@ window._loadTrendingPapers = async function(uid, conceptParam, conceptLabel) {
     container.innerHTML = `
       <div class="rw-list">
         ${rows}
-        <div class="rw-src">Source: <a href="https://openalex.org" target="_blank" class="vlink">OpenAlex</a> · Most cited in last 3 years</div>
+        <div class="rw-src">Source: <a href="https://openalex.org" target="_blank" class="vlink">OpenAlex</a> · Most cited · Last 3 years</div>
       </div>`;
   } catch(e) {
     container.innerHTML = `<p style="font-size:13px;color:var(--text-muted);padding:8px">Could not load trending papers.</p>`;
