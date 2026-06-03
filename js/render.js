@@ -652,3 +652,25 @@ window._startCitationChain = async function(uid, workId, title) {
     chainPanel.innerHTML = `<p style="font-size:13px;color:var(--text-muted)">Could not load citing papers.</p>`;
   }
 };
+
+// ── KU Journal Finder Guide card ─────────────────────────────────────────
+export function renderJournalFinderCard() {
+  return `
+    <div class="jf-guide-card">
+      <div class="jf-guide-left">
+        <div class="jf-guide-icon">📖</div>
+        <div>
+          <h4 class="jf-guide-title">KU Library Journal Finder Guide</h4>
+          <p class="jf-guide-desc">
+            Explore 20+ journal finder tools — publisher-specific finders (Elsevier, Springer, Wiley, IEEE &amp; more),
+            AI matchers, indexing checkers, and OA verifiers — all curated by KU Library.
+          </p>
+        </div>
+      </div>
+      <a href="https://library.ku.ac.ae/journalfinder"
+         target="_blank" rel="noopener"
+         class="jf-guide-btn">
+        Open Guide ↗
+      </a>
+    </div>`;
+}
