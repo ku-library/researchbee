@@ -334,6 +334,42 @@
     .trending-papers-wrap { margin: 16px 0; }
     .rw-tab:focus { outline: 2px solid #4338CA; outline-offset: 2px; }
 
+    /* ── Journal Finder Guide card ── */
+    .jf-guide-card {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; flex-wrap: wrap;
+      background: linear-gradient(135deg, #1a2744 0%, #2d4a8a 100%);
+      border-radius: 14px; padding: 18px 20px; margin: 16px 0;
+      box-shadow: 0 2px 12px rgba(26,39,68,.2);
+    }
+    .jf-guide-left { display: flex; align-items: flex-start; gap: 14px; flex: 1; min-width: 0; }
+    .jf-guide-icon {
+      font-size: 28px; flex-shrink: 0;
+      width: 48px; height: 48px; border-radius: 12px;
+      background: rgba(255,255,255,.12);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .jf-guide-title {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: 16px; font-weight: 400; color: #fff;
+      margin: 0 0 4px; line-height: 1.3;
+    }
+    .jf-guide-desc {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12.5px; color: rgba(255,255,255,.72);
+      margin: 0; line-height: 1.5;
+    }
+    .jf-guide-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #fff; color: #1a2744;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px; font-weight: 700;
+      padding: 10px 20px; border-radius: 10px;
+      text-decoration: none; white-space: nowrap; flex-shrink: 0;
+      transition: background .15s, transform .15s;
+    }
+    .jf-guide-btn:hover { background: #e0e7ff; transform: translateY(-1px); }
+
     /* ── Sort bar ── */
     .sort-bar {
       display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
