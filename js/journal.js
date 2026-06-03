@@ -8,7 +8,8 @@ import {
   renderNextActions, renderManuscriptUnderstanding, renderMascotRow,
   renderSubmissionChecklist, renderCoverLetterBtn,
   renderRelatedWorksAccordion, renderAltmetricPlaceholder, loadAltmetricBadge,
-  renderDeeperAnalysisStrip, renderSubjectDeeperAnalysisStrip, renderTrendingPapersSection
+  renderDeeperAnalysisStrip, renderSubjectDeeperAnalysisStrip, renderTrendingPapersSection,
+  renderJournalFinderCard
 } from "./render.js";
 
 const HF_BASE    = "https://nikeshn-researchbee.hf.space";
@@ -311,6 +312,7 @@ function renderJournalResults(result, container) {
 
     ${renderNextActions(result.next_actions, result.global_notes)}
     ${renderHelpCard()}
+    ${renderJournalFinderCard()}
   `;
 
   // Wire export buttons
@@ -538,6 +540,7 @@ function renderSubjectResults(result, container) {
     </div>
 
     ${renderSubjectDeeperAnalysisStrip()}
+    ${renderJournalFinderCard()}
 
     ${renderTrendingPapersSection(result.normalised, result.scimago_concept_id || "")}
   `;
