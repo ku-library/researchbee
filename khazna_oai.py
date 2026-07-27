@@ -67,6 +67,19 @@ NS = {
 
 DOI_RE = re.compile(r"\b(10\.\d{4,9}/[^\s\"'<>]+)", re.I)
 
+# Pure OAI identifiers look like:
+#   oai:pure.atira.dk:publications/ecf3878f-ccd4-4177-8a71-8be832936414
+# The portal resolves /en/publications/{uuid} and redirects to the slug URL,
+# so we can build a working link even though MODS carries no <location>.
+UUID_RE = re.compile(
+    r"([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})", re.I)
+PORTAL_BASE = "https://khazna.ku.ac.ae/en/publications/"
+
+
+def portal_url_from_oai_id(oai_id: str) -> str:
+    m = UUID_RE.search(oai_id or "")
+    return PORTAL_BASE + m.group(1) if m else ""
+
 # OpenAIRE controlled vocabulary -> our states
 OPENAIRE_ACCESS = {
     "info:eu-repo/semantics/openaccess":      "open",
@@ -200,11 +213,34 @@ def parse_record(rec: ET.Element) -> Optional[KhaznaRecord]:
 
     mods = md.find("mods:mods", NS)
     if mods is not None:
-        out.title = " ".join(_texts(mods, ".//mods:titleInfo/mods:title"))[:500]
-        out.year = next(iter(_texts(mods, ".//mods:originInfo/mods:dateIssued")), "")
+        # Pure emits several <titleInfo> blocks: the article title, the
+        # proceedings title, the series, the conference name. Only the FIRST
+        # untyped one is the actual title — joining them all produced strings
+        # like "Article title Proceedings - 2019 22nd International Conf...".
+        for ti in mods.findall("mods:titleInfo", NS):
+            if ti.get("type"):                       # alternative/abbreviated
+                continue
+            main = (ti.findtext("mods:title", default="", namespaces=NS) or "").strip()
+            sub  = (ti.findtext("mods:subTitle", default="", namespaces=NS) or "").strip()
+            if main:
+                out.title = (f"{main}: {sub}" if sub else main)[:500]
+                break
+        if not out.title:                            # fall back to the first any-type
+            out.title = next(iter(_texts(mods, ".//mods:titleInfo/mods:title")), "")[:500]
+
+        raw_year = next(iter(_texts(mods, ".//mods:originInfo/mods:dateIssued")), "")
+        out.year = raw_year[:4] if len(raw_year) >= 4 else raw_year
+        # Pure rarely emits <identifier type="doi">. In practice the DOI is
+        # embedded in the formatted citation, so search identifiers first
+        # (most reliable) then notes (where it actually lives).
         typed = [e.text.strip() for e in mods.findall(".//mods:identifier", NS)
                  if (e.get("type") or "").lower() == "doi" and e.text]
-        out.doi = _extract_doi(typed + _texts(mods, ".//mods:identifier"))
+        out.doi = _extract_doi(
+            typed
+            + _texts(mods, ".//mods:identifier")
+            + _texts(mods, ".//mods:note")
+            + _texts(mods, ".//mods:relatedItem//mods:identifier")
+        )
         for url_el in mods.findall(".//mods:location/mods:url", NS):
             url = (url_el.text or "").strip()
             if not url:
@@ -236,6 +272,9 @@ def parse_record(rec: ET.Element) -> Optional[KhaznaRecord]:
         ref = res.get("ref")
         if ref and (ref.lower().endswith(".pdf") or "/files/" in ref):
             out.file_urls.append(ref)
+
+    if not out.portal_url:
+        out.portal_url = portal_url_from_oai_id(out.oai_id)
 
     out.file_urls = sorted(set(out.file_urls))
     return out
@@ -285,22 +324,41 @@ def cmd_harvest(args) -> None:
         if r:
             by_oai[r.oai_id] = r
 
-    logger.info("Pass 2/3 — publications:withFiles (set membership)")
-    with_files = set(iter_identifiers("publications:withFiles", from_date=args.from_date))
-    for oid in with_files:
-        if oid in by_oai:
-            by_oai[oid].has_files = True
-    logger.info("  %d records flagged as having files", len(with_files))
+    # Passes 2 and 3 are SKIPPED BY DEFAULT.
+    #
+    # The gap report (2026-07-27) showed 19,469 records across 2015-2026 and
+    # ZERO with files — Khazna is currently a metadata-only CRIS. Harvesting
+    # publications:withFiles and the openaire access-rights set therefore
+    # costs ~40 requests a night to learn nothing.
+    #
+    # Re-enable with --with-files once deposits begin. The cheap probe below
+    # tells us when that day arrives.
+    if args.with_files:
+        logger.info("Pass 2 — publications:withFiles (set membership)")
+        with_files = set(iter_identifiers("publications:withFiles",
+                                          from_date=args.from_date))
+        for oid in with_files:
+            if oid in by_oai:
+                by_oai[oid].has_files = True
+        logger.info("  %d records flagged as having files", len(with_files))
 
-    logger.info("Pass 3/3 — openaire (access rights vocabulary)")
-    n_rights = 0
-    for rec in iter_records("openaire", "oai_dc", from_date=args.from_date):
-        r = parse_record(rec)
-        if r and r.oai_id in by_oai and r.access_rights:
-            by_oai[r.oai_id].access_rights = r.access_rights
-            by_oai[r.oai_id].embargo_end = r.embargo_end
-            n_rights += 1
-    logger.info("  %d records enriched with access rights", n_rights)
+        logger.info("Pass 3 — openaire (access rights vocabulary)")
+        n_rights = 0
+        for rec in iter_records("openaire", "oai_dc", from_date=args.from_date):
+            r = parse_record(rec)
+            if r and r.oai_id in by_oai and r.access_rights:
+                by_oai[r.oai_id].access_rights = r.access_rights
+                by_oai[r.oai_id].embargo_end = r.embargo_end
+                n_rights += 1
+        logger.info("  %d records enriched with access rights", n_rights)
+    else:
+        # One cheap request: has anything been deposited since last time?
+        probe = list(iter_identifiers("publications:withFiles"))[:1]
+        if probe:
+            logger.warning("Khazna now has records WITH FILES — "
+                           "re-run with --with-files to capture access status.")
+        else:
+            logger.info("Skipped file passes: Khazna remains metadata-only.")
 
     index = {r.doi: asdict(r) | {"deposit_state": r.deposit_state}
              for r in by_oai.values() if r.doi}
@@ -374,6 +432,9 @@ def main() -> None:
     h.add_argument("--from", dest="from_date", default=None,
                    help="ISO datetime for incremental harvest")
     h.add_argument("--limit", type=int, default=None)
+    h.add_argument("--with-files", action="store_true",
+                   help="also harvest file/access-rights passes "
+                        "(only useful once Khazna holds deposits)")
     h.set_defaults(func=cmd_harvest)
 
     l = sub.add_parser("lookup")
