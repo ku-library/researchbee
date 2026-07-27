@@ -1,15 +1,19 @@
 name: Harvest Khazna
 
 # UAE is UTC+4 all year (no DST), so 23:00 Dubai == 19:00 UTC.
-# Note: GitHub Actions cron is best-effort and may drift 5-30 min under load.
+# GitHub cron is best-effort and may drift 5-30 min under load.
 on:
   schedule:
     - cron: "0 19 * * 0"    # Sunday  — FULL harvest (catches withdrawals)
     - cron: "0 19 * * 1-6"  # Mon-Sat — INCREMENTAL
-  workflow_dispatch:         # manual trigger — use this for the first run
+  workflow_dispatch:
     inputs:
       full:
         description: "Force a full harvest"
+        type: boolean
+        default: false
+      skip_upload:
+        description: "Harvest only — do not publish to HF (no token needed)"
         type: boolean
         default: false
 
@@ -22,30 +26,76 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
-      - run: pip install httpx huggingface_hub
+      # ── Preflight: fail with a readable reason, not a bare exit code ─────
+      - name: Preflight
+        id: pre
+        run: |
+          echo "## Preflight" >> $GITHUB_STEP_SUMMARY
+          fail=0
 
-      # Restore the previous index + watermark so incrementals can merge.
+          if [ ! -f khazna_oai.py ]; then
+            echo "❌ \`khazna_oai.py\` not found in the repository root." >> $GITHUB_STEP_SUMMARY
+            echo "   Files present:" >> $GITHUB_STEP_SUMMARY
+            ls -1 >> $GITHUB_STEP_SUMMARY
+            fail=1
+          else
+            echo "✅ khazna_oai.py found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ -z "${{ secrets.HF_TOKEN }}" ]; then
+            echo "⚠️ HF_TOKEN secret is not set — will harvest but not publish." >> $GITHUB_STEP_SUMMARY
+            echo "has_token=false" >> $GITHUB_OUTPUT
+          else
+            echo "✅ HF_TOKEN present" >> $GITHUB_STEP_SUMMARY
+            echo "has_token=true" >> $GITHUB_OUTPUT
+          fi
+
+          if [ "$fail" = "1" ]; then
+            echo "::error::Preflight failed — see the job summary."
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: pip install httpx huggingface_hub
+
+      - name: Verify the harvester runs
+        run: |
+          python khazna_oai.py --help > /dev/null \
+            || { echo "::error::khazna_oai.py failed to start — is it the v2 file?"; exit 1; }
+          echo "✅ harvester CLI OK" >> $GITHUB_STEP_SUMMARY
+
+      - name: Endpoint reachable?
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 \
+                 "https://khazna.ku.ac.ae/ws/oai?verb=Identify")
+          echo "Khazna OAI returned HTTP $code" >> $GITHUB_STEP_SUMMARY
+          [ "$code" = "200" ] || { echo "::error::Khazna OAI unreachable (HTTP $code)"; exit 1; }
+
+      # ── Restore previous index so incrementals can merge ─────────────────
       - name: Restore previous index
+        if: steps.pre.outputs.has_token == 'true'
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_DATASET: ${{ vars.KHAZNA_DATASET || 'nikeshn/researchbee-data' }}
         run: |
           python - <<'PY'
-          import os
+          import os, shutil
           from huggingface_hub import hf_hub_download
+          repo = os.environ["HF_DATASET"]
           for f in ("khazna_index.json", "last_harvest.txt"):
               try:
-                  p = hf_hub_download("nikeshn/researchbee-data", f,
-                                      repo_type="dataset", token=os.environ["HF_TOKEN"])
-                  open(f, "wb").write(open(p, "rb").read())
+                  p = hf_hub_download(repo, f, repo_type="dataset",
+                                      token=os.environ["HF_TOKEN"])
+                  shutil.copy(p, f)
                   print("restored", f)
               except Exception as e:
-                  print("no previous", f, "-", e)
+                  print(f"no previous {f}: {type(e).__name__}")
           PY
 
       - name: Decide mode
@@ -59,18 +109,31 @@ jobs:
             echo "args=--from $(cat last_harvest.txt)" >> $GITHUB_OUTPUT
             echo "mode=INCREMENTAL" >> $GITHUB_OUTPUT
           fi
+          echo "Mode: $(cat $GITHUB_OUTPUT | grep mode= | cut -d= -f2)" >> $GITHUB_STEP_SUMMARY
 
       - name: Harvest (${{ steps.mode.outputs.mode }})
         run: |
+          set -o pipefail
           STARTED=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-          python khazna_oai_v2.py harvest ${{ steps.mode.outputs.args }}
+          python khazna_oai.py harvest ${{ steps.mode.outputs.args }} 2>&1 | tee harvest.log
           echo "$STARTED" > last_harvest.txt
 
-      # Fail loudly rather than publishing an empty index over a good one.
+      - name: Report
+        if: always()
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Harvest output" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -c 8000 harvest.log >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "(no log)" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      # Never publish an empty index over a good one.
       - name: Sanity check
         run: |
           python - <<'PY'
-          import json, sys
+          import json, sys, os
+          if not os.path.exists("khazna_index.json"):
+              sys.exit("No khazna_index.json was produced.")
           idx = json.load(open("khazna_index.json"))
           print(f"{len(idx):,} DOIs in index")
           if len(idx) < 1000:
@@ -78,21 +141,31 @@ jobs:
           PY
 
       - name: Publish to HF Dataset
+        if: steps.pre.outputs.has_token == 'true' && inputs.skip_upload != true
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_DATASET: ${{ vars.KHAZNA_DATASET || 'nikeshn/researchbee-data' }}
         run: |
           python - <<'PY'
           import os
           from huggingface_hub import HfApi
           api = HfApi(token=os.environ["HF_TOKEN"])
+          repo = os.environ["HF_DATASET"]
           for f in ("khazna_index.json", "last_harvest.txt"):
               api.upload_file(path_or_fileobj=f, path_in_repo=f,
-                              repo_id="nikeshn/researchbee-data", repo_type="dataset")
-              print("uploaded", f)
+                              repo_id=repo, repo_type="dataset")
+              print("uploaded", f, "->", repo)
           PY
+          echo "✅ Published to HF Dataset" >> $GITHUB_STEP_SUMMARY
 
-      - name: Summary
-        run: |
-          echo "### Khazna harvest — ${{ steps.mode.outputs.mode }}" >> $GITHUB_STEP_SUMMARY
-          python -c "import json;print(f'{len(json.load(open(\"khazna_index.json\"))):,} DOIs')" \
-            >> $GITHUB_STEP_SUMMARY
+      - name: Upload artefacts
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: khazna-harvest
+          path: |
+            khazna_index.json
+            harvest.log
+            last_harvest.txt
+          if-no-files-found: warn
+          retention-days: 14
