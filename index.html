@@ -508,22 +508,22 @@
     <button class="tab-btn active" data-tab="journals">
       <span class="tab-icon-wrap tab-icon-journal">📰</span>
       <span class="tab-label-wrap">
-        <span class="tab-label-main">Journal submission</span>
-        <span class="tab-label-sub">Find &amp; rank journals</span>
+        <span class="tab-label-main">Find a journal</span>
+        <span class="tab-label-sub">Rank &amp; compare</span>
       </span>
     </button>
     <button class="tab-btn" data-tab="license">
       <span class="tab-icon-wrap tab-icon-license">🛡</span>
       <span class="tab-label-wrap">
-        <span class="tab-label-main">License checking</span>
-        <span class="tab-label-sub">Self-archiving rights</span>
+        <span class="tab-label-main">Share your article</span>
+        <span class="tab-label-sub">Deposit rights &amp; KU repository</span>
       </span>
     </button>
     <button class="tab-btn" data-tab="data">
       <span class="tab-icon-wrap tab-icon-data">🗄</span>
       <span class="tab-label-wrap">
-        <span class="tab-label-main">Data repository</span>
-        <span class="tab-label-sub">Find the right repo</span>
+        <span class="tab-label-main">Deposit your data</span>
+        <span class="tab-label-sub">Find the right repository</span>
       </span>
     </button>
   </div>
@@ -555,7 +555,7 @@
         <div class="card">
           <div class="card-header">
             <h2>📊 Browse journals by subject</h2>
-            <p>Type any subject, discipline, or research area. Spelling corrections and nearest matches are handled automatically.</p>
+            <p>Explore journals in a subject area, sorted by quartile, h-index or open access route. KU APC agreement cover is flagged on eligible Q1 titles.</p>
           </div>
           <div class="card-body">
             <div class="form-group" style="max-width:500px">
@@ -577,7 +577,7 @@
         <div class="card">
           <div class="card-header">
             <h2>📰 Manuscript details</h2>
-            <p>Provide as much detail as you can. Missing fields will be inferred and labelled as assumptions.</p>
+            <p>Describe your manuscript and we will suggest and rank suitable journals by quartile, h-index and open access route, flagging KU APC agreement cover on eligible Q1 titles. Provide as much detail as you can &mdash; anything missing is inferred and labelled as an assumption.</p>
           </div>
           <div class="card-body">
             <div class="form-grid form-2col">
@@ -621,15 +621,16 @@
     <form id="license-form">
       <div class="card">
         <div class="card-header">
-          <h2>🛡 Check Green OA / self-archiving rights</h2>
-          <p>Enter your article's <strong>DOI or URL</strong> for a verified, article-level answer from the OA.Works Permissions database. Without a DOI we can only point you to what to check.</p>
+          <h2>🛡 Share your published article</h2>
+          <p>Find out which version of your article you are permitted to deposit, where, and after how long &mdash; then whether it is already in the <strong>KU repository, Khazna</strong>. Enter your <strong>DOI or article URL</strong> for a verified, article-level answer; without one we can only point you to what to check.</p>
         </div>
         <div class="card-body">
           <div class="form-grid form-2col">
             <div class="form-group form-full doi-primary">
               <label for="l-doi" id="lbl-l-doi">Article DOI or URL <span class="recommended">recommended — gives a verified answer</span></label>
               <input id="l-doi" type="text" placeholder="e.g. 10.1080/19322909.2023.2221477 or https://doi.org/...">
-              <div class="field-hint">Paste the DOI or the article page URL. We'll extract the DOI automatically and check your exact article &mdash; including whether it's already in Khazna.</div>
+              <div class="field-hint">Paste the DOI or the article page URL. We'll extract the DOI automatically and check your exact article &mdash; including whether it is already in the KU repository, Khazna.</div>
+              <button type="submit" class="btn btn-primary doi-submit">🛡 <span>Check Green OA policy</span></button>
             </div>
             <div class="form-group form-full or-divider"><span>or look up by journal (unverified estimate)</span></div>
             <div class="form-group"><label for="l-journal" id="lbl-l-journal">Journal name</label><input id="l-journal" type="text" placeholder="e.g. Nature Communications"></div>
@@ -655,7 +656,7 @@
       <div class="card">
         <div class="card-header">
           <h2>🗄 Find a research data repository</h2>
-          <p>Describe your dataset. We'll match it to domain-specific and generalist repositories and Khazna — the KU institutional repository.</p>
+          <p>Describe your dataset and we will match it to suitable domain-specific and generalist repositories, alongside the <strong>KU repository, Khazna</strong>. Repositories come from a registry curated by KU Library &mdash; their details are verified records, not generated.</p>
         </div>
         <div class="card-body">
           <div class="form-grid form-2col">
@@ -700,7 +701,15 @@
 <footer class="site-footer">
   <div class="footer-inner">
     <p>Ranking metrics sourced from journal data (2025). Always verify policies on <a href="https://openpolicyfinder.jisc.ac.uk" target="_blank">Open Policy Finder</a> and repositories on <a href="https://www.re3data.org" target="_blank">re3data</a> before deposit.</p>
-    <p><a href="https://library.ku.ac.ae/lib" target="_blank">KU Library</a> · <a href="https://khazna.ku.ac.ae" target="_blank">Khazna Repository</a> · <a href="https://github.com/ku-library/researchbee" target="_blank">GitHub</a></p>
+    <p><a href="https://library.ku.ac.ae/lib" target="_blank">KU Library</a> · <a href="https://khazna.ku.ac.ae" target="_blank">KU repository &mdash; Khazna</a> · <a href="https://github.com/ku-library/researchbee" target="_blank">GitHub</a></p>
+    <p class="footer-sources">
+      <strong>Data sources.</strong>
+      Self-archiving permissions: <a href="https://shareyourpaper.org/permissions" target="_blank" rel="noopener">Shareyourpaper.org Permissions</a> (OA.Works).
+      Journal metrics: SCImago, (n.d.). <a href="https://www.scimagojr.com" target="_blank" rel="noopener">SJR &mdash; SCImago Journal &amp; Country Rank</a> [Portal], data used under non-commercial terms with attribution.
+      Journal and works metadata: <a href="https://openalex.org" target="_blank" rel="noopener">OpenAlex</a>.
+      Repository holdings: <a href="https://khazna.ku.ac.ae" target="_blank" rel="noopener">Khazna</a> (OAI-PMH).
+      ResearchBee reports what these sources say; where a source cannot confirm a policy, it says so rather than estimating.
+    </p>
   </div>
 </footer>
 
