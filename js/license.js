@@ -5,6 +5,10 @@ import {
   esc, oaStatusBadge, renderVersionBlock, renderVerifyLinks,
   renderKhaznaCard, renderHelpCard, renderNextActions, renderMascotRow
 } from "./render.js";
+import {
+  provenanceBadge, renderSourcePanel, renderDepositStatement,
+  renderKhaznaStatus, renderShareYourPaper, wireCopyButtons
+} from "./render_license.js";
 
 const HF_BASE = "https://nikeshn-researchbee.hf.space";
 
@@ -193,6 +197,16 @@ export function licenseTab() {
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+    const doiVal = document.getElementById("l-doi")?.value?.trim() || "";
+    const jrnVal = document.getElementById("l-journal")?.value?.trim() || "";
+    if (!doiVal && !jrnVal) {
+      results.classList.remove("hidden");
+      results.innerHTML = `<div class="card"><div class="card-body">
+        <p style="color:var(--danger)">Please enter either an article DOI/URL
+        (recommended — gives a verified answer) or a journal name.</p></div></div>`;
+      return;
+    }
+
     const submitBtn = form.querySelector(".btn-primary");
     submitBtn.disabled = true;
     submitBtn.innerHTML = `🔍 Checking policy...`;
@@ -200,8 +214,8 @@ export function licenseTab() {
     results.classList.remove("hidden");
 
     showProgress("license-progress", [
-      "Looking up journal...",
-      "Checking Green OA policy...",
+      doiVal ? "Resolving DOI..." : "Reading journal details...",
+      doiVal ? "Checking OA.Works Permissions + Khazna..." : "Preparing guidance...",
       "Building deposit guidance..."
     ]);
 
@@ -230,6 +244,7 @@ export function licenseTab() {
 function getLicenseData() {
   const g = id => document.getElementById(id)?.value?.trim() || "";
   return {
+    doi:                 g("l-doi"),          // DOI or article URL — verified path
     journal_name:        g("l-journal"),
     issn:                g("l-issn"),
     publisher:           g("l-publisher"),
@@ -241,7 +256,7 @@ function getLicenseData() {
   };
 }
 
-function renderPolicyCard(j) {
+function renderPolicyCard(j, sourceMode, result) {
   const oa = j.green_oa || {};
   const policyNotes = [
     oa.licence_notes          ? `<p><strong>Licence notes:</strong> ${esc(oa.licence_notes)}</p>` : "",
@@ -264,7 +279,7 @@ function renderPolicyCard(j) {
         <div class="j-meta">${esc(j.publisher || "")}${j.issn ? ` · ISSN ${esc(j.issn)}` : ""}</div>
         <div class="j-title">${esc(j.name)}</div>
         <div class="badge-row">
-          ${oaStatusBadge(oa.policy_status || "Not confirmed")}
+          ${provenanceBadge(oa, sourceMode)}
         </div>
       </div>
       <div class="j-body">
@@ -276,7 +291,9 @@ function renderPolicyCard(j) {
             ${renderVersionBlock("Published version (Version of Record)", oa.published_version)}
           </div>
         </div>
+        ${renderDepositStatement(oa)}
         ${policyNotes ? `<div class="policy-notes">${policyNotes}</div>` : ""}
+        ${renderSourcePanel(oa, result)}
         ${renderVerifyLinks(licenseVerifyLinks, false)}
       </div>
     </div>`;
@@ -306,9 +323,14 @@ function renderDepositRecommendation(r) {
 }
 
 function renderLicenseResults(result, container) {
-  const journals = result.journals || [];
+  const journals   = result.journals || [];
+  const sourceMode = result.source_mode || "journal";
+  const firstOA    = journals[0]?.green_oa || {};
+  const intro = sourceMode === "doi"
+    ? "Here are your verified self-archiving rights for this article."
+    : "I could not verify a policy for this journal — here is what to check.";
   container.innerHTML = `
-    ${renderMascotRow('Here is the self-archiving policy for your journal.')}
+    ${renderMascotRow(intro)}
     <div class="results-header">
       <h2 class="results-title">Policy result</h2>
       <div class="results-meta">
@@ -316,8 +338,10 @@ function renderLicenseResults(result, container) {
       </div>
     </div>
     <h3 style="font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:14px">🟢 Green OA / self-archiving by version</h3>
-    ${journals.map(j => renderPolicyCard(j)).join("")}
+    ${journals.map(j => renderPolicyCard(j, sourceMode, result)).join("")}
+    ${renderKhaznaStatus(result.khazna_status)}
     ${renderDepositRecommendation(result.repository_recommendation)}
+    ${renderShareYourPaper(result, firstOA)}
     ${result.khazna ? renderKhaznaCard(result.khazna, "article") : ""}
     ${renderNextActions(result.next_actions, result.global_notes)}
     ${renderHelpCard()}
@@ -328,9 +352,11 @@ function renderLicenseResults(result, container) {
     container.classList.add("hidden");
     document.getElementById("license-progress")?.classList.remove("show");
     document.getElementById("license-form")?.reset();
+    const dEl = document.getElementById("l-doi"); if (dEl) dEl.value = "";
     document.getElementById("journal-lookup-wrap") && (document.getElementById("journal-lookup-wrap").innerHTML = "");
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
 
+  wireCopyButtons(container);
   container.scrollIntoView({ behavior: "smooth", block: "start" });
 }
