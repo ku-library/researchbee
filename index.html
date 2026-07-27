@@ -621,12 +621,18 @@
     <form id="license-form">
       <div class="card">
         <div class="card-header">
-          <h2>🛡 Check journal Green OA / self-archiving policy</h2>
-          <p>Look up version-specific deposit permissions, embargoes, and licence conditions for a known journal.</p>
+          <h2>🛡 Check Green OA / self-archiving rights</h2>
+          <p>Enter your article's <strong>DOI or URL</strong> for a verified, article-level answer from the OA.Works Permissions database. Without a DOI we can only point you to what to check.</p>
         </div>
         <div class="card-body">
           <div class="form-grid form-2col">
-            <div class="form-group"><label for="l-journal" id="lbl-l-journal">Journal name <span class="req">*</span></label><input id="l-journal" type="text" required placeholder="e.g. Nature Communications"></div>
+            <div class="form-group form-full doi-primary">
+              <label for="l-doi" id="lbl-l-doi">Article DOI or URL <span class="recommended">recommended — gives a verified answer</span></label>
+              <input id="l-doi" type="text" placeholder="e.g. 10.1080/19322909.2023.2221477 or https://doi.org/...">
+              <div class="field-hint">Paste the DOI or the article page URL. We'll extract the DOI automatically and check your exact article &mdash; including whether it's already in Khazna.</div>
+            </div>
+            <div class="form-group form-full or-divider"><span>or look up by journal (unverified estimate)</span></div>
+            <div class="form-group"><label for="l-journal" id="lbl-l-journal">Journal name</label><input id="l-journal" type="text" placeholder="e.g. Nature Communications"></div>
             <div class="form-group"><label for="l-issn" id="lbl-l-issn">ISSN (optional — improves accuracy)</label><input id="l-issn" type="text" placeholder="e.g. 2041-1723"></div>
             <div class="form-group"><label for="l-publisher" id="lbl-l-publisher">Publisher (optional)</label><input id="l-publisher" type="text" placeholder="e.g. Springer Nature"></div>
             <div class="form-group"><label for="l-version" id="lbl-l-version">Manuscript version of interest</label><select id="l-version"><option>All versions</option><option>Submitted version / preprint</option><option>Accepted manuscript (AAM / postprint)</option><option>Published version (VoR)</option></select></div>
