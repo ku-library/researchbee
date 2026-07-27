@@ -1,0 +1,92 @@
+name: Khazna Diagnostics
+
+# Manual only. No secrets required — this just reads Khazna's public OAI-PMH
+# endpoint and prints what it finds. Use it to verify the harvester works
+# before setting up the HF Dataset and token.
+on:
+  workflow_dispatch:
+    inputs:
+      command:
+        description: "What to run"
+        type: choice
+        default: gap
+        options:
+          - gap                 # deposit gap per year — start here
+          - inspect-mods        # sample records in MODS format
+          - inspect-openaire    # sample records with access rights
+          - inspect-withfiles   # sample records that DO have files
+          - harvest-sample      # harvest 500 records, no upload
+      start_year:
+        description: "Gap report: first year"
+        default: "2015"
+      end_year:
+        description: "Gap report: last year"
+        default: "2026"
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: pip install httpx
+
+      - name: Endpoint reachable?
+        run: |
+          echo "### Khazna OAI-PMH endpoint" >> $GITHUB_STEP_SUMMARY
+          echo '```xml' >> $GITHUB_STEP_SUMMARY
+          curl -s --max-time 30 "https://khazna.ku.ac.ae/ws/oai?verb=Identify" \
+            | head -c 1200 >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Run diagnostic
+        run: |
+          set -o pipefail
+          case "${{ inputs.command }}" in
+            gap)
+              python khazna_oai.py gap \
+                --start ${{ inputs.start_year }} --end ${{ inputs.end_year }} \
+                2>&1 | tee out.txt
+              ;;
+            inspect-mods)
+              python khazna_oai.py inspect --set publications:all \
+                --format mods -n 3 --raw 2>&1 | tee out.txt
+              ;;
+            inspect-openaire)
+              python khazna_oai.py inspect --set openaire \
+                --format oai_dc -n 3 --raw 2>&1 | tee out.txt
+              ;;
+            inspect-withfiles)
+              python khazna_oai.py inspect --set publications:withFiles \
+                --format mods -n 3 --raw 2>&1 | tee out.txt
+              ;;
+            harvest-sample)
+              python khazna_oai.py harvest --limit 500 2>&1 | tee out.txt
+              ;;
+          esac
+
+      - name: Publish result to summary
+        if: always()
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Result: \`${{ inputs.command }}\`" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          head -c 60000 out.txt >> $GITHUB_STEP_SUMMARY || echo "(no output)" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      # Downloadable copy — useful for the gap table, which you'll want to keep.
+      - name: Upload artefacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: khazna-diagnostics
+          path: |
+            out.txt
+            khazna_index.json
+          if-no-files-found: warn
+          retention-days: 14
