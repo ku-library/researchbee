@@ -7,7 +7,8 @@ import {
 } from "./render.js";
 import {
   provenanceBadge, renderSourcePanel, renderDepositStatement,
-  renderKhaznaStatus, renderShareYourPaper, wireCopyButtons
+  renderKhaznaStatus, renderShareYourPaper, renderSubjectRepositories,
+  wireCopyButtons
 } from "./render_license.js";
 
 const HF_BASE = "https://nikeshn-researchbee.hf.space";
@@ -207,9 +208,8 @@ export function licenseTab() {
       return;
     }
 
-    const submitBtn = form.querySelector(".btn-primary");
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = `🔍 Checking policy...`;
+    const submitBtns = form.querySelectorAll(".btn-primary");
+    submitBtns.forEach(b => { b.disabled = true; b.innerHTML = `🔍 Checking policy...`; });
     results.innerHTML = "";
     results.classList.remove("hidden");
 
@@ -235,8 +235,10 @@ export function licenseTab() {
            <span>Error: ${esc(err.message)}</span>
          </div>`;
     } finally {
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = `🛡 Check Green OA policy`;
+      submitBtns.forEach(b => {
+        b.disabled = false;
+        b.innerHTML = `🛡 Check Green OA policy`;
+      });
     }
   });
 }
@@ -342,6 +344,7 @@ function renderLicenseResults(result, container) {
     ${renderKhaznaStatus(result.khazna_status)}
     ${renderDepositRecommendation(result.repository_recommendation)}
     ${renderShareYourPaper(result, firstOA)}
+    ${renderSubjectRepositories(result.subject_repositories)}
     ${result.khazna ? renderKhaznaCard(result.khazna, "article") : ""}
     ${renderNextActions(result.next_actions, result.global_notes)}
     ${renderHelpCard()}

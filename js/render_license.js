@@ -77,10 +77,10 @@ export function renderKhaznaStatus(k) {
       <div class="khazna-status ks-unknown">
         <span class="ks-icon">❔</span>
         <div>
-          <strong>Khazna status not checked</strong>
+          <strong>KU repository status not checked</strong>
           <p>${esc(k.reason === "no DOI supplied"
-              ? "Enter your article's DOI to check whether it is already deposited in Khazna."
-              : "The Khazna index is temporarily unavailable, so we could not check. This does not mean the article is absent.")}</p>
+              ? "Enter your article's DOI to check whether it is already in the KU repository, Khazna."
+              : "The KU repository index is temporarily unavailable, so we could not check. This does not mean the article is absent from Khazna.")}</p>
         </div>
       </div>`;
   }
@@ -90,7 +90,7 @@ export function renderKhaznaStatus(k) {
       <div class="khazna-status ks-absent">
         <span class="ks-icon">📭</span>
         <div>
-          <strong>Not yet in Khazna</strong>
+          <strong>Not yet in the KU repository</strong>
           <p>${esc(k.message)} Depositing adds it to KU's research portfolio.</p>
         </div>
       </div>`;
@@ -106,10 +106,10 @@ export function renderKhaznaStatus(k) {
     <div class="khazna-status ${cls}">
       <span class="ks-icon">${icon}</span>
       <div>
-        <strong>In Khazna &mdash; ${esc(state.replace("_", " "))}</strong>
+        <strong>In the KU repository &mdash; ${esc(state.replace("_", " "))}</strong>
         <p>${esc(k.message)}</p>
         ${k.embargo_end ? `<p class="ks-meta">Embargo ends: <strong>${esc(k.embargo_end)}</strong></p>` : ""}
-        ${k.portal_url ? `<a href="${esc(k.portal_url)}" target="_blank" rel="noopener" class="ks-link">View Khazna record →</a>` : ""}
+        ${k.portal_url ? `<a href="${esc(k.portal_url)}" target="_blank" rel="noopener" class="ks-link">View the Khazna record →</a>` : ""}
       </div>
     </div>`;
 }
@@ -127,6 +127,38 @@ export function renderShareYourPaper(result, green) {
         <a href="${esc(result.shareyourpaper_url)}" target="_blank" rel="noopener" class="syp-btn">
           Open ShareYourPaper →
         </a>
+      </div>
+    </div>`;
+}
+
+// ── Subject repositories — for the ARTICLE, not for data ─────────────────
+// Rendered only when OA.Works confirmed a subject repository is permitted.
+export function renderSubjectRepositories(repos) {
+  if (!repos?.length) return "";
+  return `
+    <div class="card mt-6">
+      <div class="card-header">
+        <h2>📚 Subject repositories you may also use</h2>
+        <p>Your publisher permits deposit in a non-commercial subject repository.
+           These match this journal's subject area.</p>
+      </div>
+      <div class="card-body">
+        <div class="subj-grid">
+          ${repos.map(r => `
+            <div class="subj-card">
+              <div class="subj-head">
+                <a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.name)}</a>
+              </div>
+              <p class="subj-scope">${esc(r.scope)}</p>
+              <dl class="subj-meta">
+                <div><dt>Versions</dt><dd>${esc(r.versions)}</dd></div>
+                <div><dt>Review</dt><dd>${esc(r.moderation)}</dd></div>
+              </dl>
+              <p class="subj-verified">${esc(r.verified_note || "")}</p>
+            </div>`).join("")}
+        </div>
+        <p class="subj-note">A subject repository does not replace the KU repository,
+          Khazna &mdash; deposit in both so the work counts towards KU's research portfolio.</p>
       </div>
     </div>`;
 }

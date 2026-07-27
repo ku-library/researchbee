@@ -124,14 +124,14 @@ export function renderRankingBlock(r) {
 
 export function renderKhaznaCard(k, mode = "article") {
   const tip = mode === "data"
-    ? "Even if depositing data in a domain-specific repository, always register metadata in Khazna so your work appears in KU's research portfolio."
-    : "Deposit your accepted manuscript (or metadata record if under embargo) to Khazna for KU institutional visibility and compliance.";
+    ? "Even when your data lives in a domain-specific repository, register the metadata in the KU repository, Khazna, so the work appears in KU's research portfolio."
+    : "Deposit your accepted manuscript — or a metadata-only record if it is under embargo — in the KU repository, Khazna, for institutional visibility and compliance.";
   return `
     <div class="khazna-card">
       <div class="khazna-head">
         <span style="font-size:22px">🏛️</span>
         <div>
-          <h3>Khazna — KU Institutional Repository</h3>
+          <h3>KU repository &mdash; Khazna</h3>
           <div style="font-size:12px;opacity:.8">khazna.ku.ac.ae</div>
         </div>
       </div>
