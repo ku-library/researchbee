@@ -1,1 +1,98 @@
+name: Harvest Khazna
 
+# UAE is UTC+4 all year (no DST), so 23:00 Dubai == 19:00 UTC.
+# Note: GitHub Actions cron is best-effort and may drift 5-30 min under load.
+on:
+  schedule:
+    - cron: "0 19 * * 0"    # Sunday  — FULL harvest (catches withdrawals)
+    - cron: "0 19 * * 1-6"  # Mon-Sat — INCREMENTAL
+  workflow_dispatch:         # manual trigger — use this for the first run
+    inputs:
+      full:
+        description: "Force a full harvest"
+        type: boolean
+        default: false
+
+concurrency:
+  group: khazna-harvest
+  cancel-in-progress: false
+
+jobs:
+  harvest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: pip install httpx huggingface_hub
+
+      # Restore the previous index + watermark so incrementals can merge.
+      - name: Restore previous index
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          python - <<'PY'
+          import os
+          from huggingface_hub import hf_hub_download
+          for f in ("khazna_index.json", "last_harvest.txt"):
+              try:
+                  p = hf_hub_download("nikeshn/researchbee-data", f,
+                                      repo_type="dataset", token=os.environ["HF_TOKEN"])
+                  open(f, "wb").write(open(p, "rb").read())
+                  print("restored", f)
+              except Exception as e:
+                  print("no previous", f, "-", e)
+          PY
+
+      - name: Decide mode
+        id: mode
+        run: |
+          DOW=$(date -u +%u)   # 7 = Sunday
+          if [ "${{ inputs.full }}" = "true" ] || [ "$DOW" = "7" ] || [ ! -f last_harvest.txt ]; then
+            echo "args=" >> $GITHUB_OUTPUT
+            echo "mode=FULL" >> $GITHUB_OUTPUT
+          else
+            echo "args=--from $(cat last_harvest.txt)" >> $GITHUB_OUTPUT
+            echo "mode=INCREMENTAL" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Harvest (${{ steps.mode.outputs.mode }})
+        run: |
+          STARTED=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          python khazna_oai_v2.py harvest ${{ steps.mode.outputs.args }}
+          echo "$STARTED" > last_harvest.txt
+
+      # Fail loudly rather than publishing an empty index over a good one.
+      - name: Sanity check
+        run: |
+          python - <<'PY'
+          import json, sys
+          idx = json.load(open("khazna_index.json"))
+          print(f"{len(idx):,} DOIs in index")
+          if len(idx) < 1000:
+              sys.exit(f"Index suspiciously small ({len(idx)}) — refusing to publish.")
+          PY
+
+      - name: Publish to HF Dataset
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          python - <<'PY'
+          import os
+          from huggingface_hub import HfApi
+          api = HfApi(token=os.environ["HF_TOKEN"])
+          for f in ("khazna_index.json", "last_harvest.txt"):
+              api.upload_file(path_or_fileobj=f, path_in_repo=f,
+                              repo_id="nikeshn/researchbee-data", repo_type="dataset")
+              print("uploaded", f)
+          PY
+
+      - name: Summary
+        run: |
+          echo "### Khazna harvest — ${{ steps.mode.outputs.mode }}" >> $GITHUB_STEP_SUMMARY
+          python -c "import json;print(f'{len(json.load(open(\"khazna_index.json\"))):,} DOIs')" \
+            >> $GITHUB_STEP_SUMMARY
